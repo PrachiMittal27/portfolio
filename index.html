@@ -47,7 +47,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=234">
+<link rel="stylesheet" href="styles.css?v=235">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -516,10 +516,13 @@
     one card is shown full-width with content and the others are
     narrow and empty. Real structural interaction, not a static rough
     stand-in — click support is the actual spec here, not a detail to
-    defer. Seven cards total — .testimonial-row's own overflow-x:auto
-    (see styles.css) already handles however many narrow strips don't
-    fit in one viewport width, so this scales up from four without any
-    layout changes. Placeholder quote/name copy throughout.
+    defer. Seven real testimonials, no placeholders — .testimonial-row's
+    own overflow-x:auto (see styles.css) already handles however many
+    narrow strips don't fit in one viewport width, so the count can go
+    up or down without any layout changes. The first card carries
+    aria-expanded="true" so one quote is readable before any hover;
+    initTestimonials (script.js) moves that state on mouseenter/focus,
+    and expects exactly one card to start expanded.
   -->
   <section class="testimonials-section" aria-labelledby="testimonials-heading">
     <svg class="curve curve--testimonials-top" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
@@ -529,6 +532,51 @@
       <h2 class="testimonials-heading" id="testimonials-heading">What <span class="testimonials-heading__accent">They</span> Had to Say</h2>
 
       <div class="testimonial-row">
+        <button class="testimonial-card" type="button" aria-expanded="true">
+          <span class="testimonial-card__content">
+            <span class="testimonial-card__quote">&ldquo;Prachi has been great to work with. She understood our requirements quickly, brought strong creative ideas to the table, and was always open to feedback and revisions. From social media content to Amazon creatives and videos, she consistently delivered work that felt polished and on-brand. I&rsquo;d definitely love to work with her again!&rdquo;</span>
+            <span class="testimonial-card__author">
+              <span class="testimonial-card__avatar"></span>
+              <span class="testimonial-card__meta">Paridhi</span>
+            </span>
+          </span>
+        </button>
+        <button class="testimonial-card" type="button" aria-expanded="false">
+          <span class="testimonial-card__content">
+            <span class="testimonial-card__quote">&ldquo;Prachi did an amazing job bringing our brand identity together. She understood the direction we wanted and translated it into a strong, cohesive visual identity across the branding and website. She was thoughtful with the details, open to feedback, and made the entire process smooth. We&rsquo;re really happy with how the final brand came together and would definitely recommend working with her.&rdquo;</span>
+            <span class="testimonial-card__author">
+              <span class="testimonial-card__avatar"></span>
+              <span class="testimonial-card__meta">Balmukund</span>
+            </span>
+          </span>
+        </button>
+        <button class="testimonial-card" type="button" aria-expanded="false">
+          <span class="testimonial-card__content">
+            <span class="testimonial-card__quote">&ldquo;Prachi did an excellent job with the branding for Aditya Study Circle. She understood the vision, brought a fresh creative perspective, and delivered designs that we were genuinely happy with. Her attention to detail and ability to turn our ideas into polished visuals made the entire process smooth. We truly appreciate her work and would be happy to work with her again.&rdquo;</span>
+            <span class="testimonial-card__author">
+              <span class="testimonial-card__avatar"></span>
+              <span class="testimonial-card__meta">Aditya Jalan</span>
+            </span>
+          </span>
+        </button>
+        <button class="testimonial-card" type="button" aria-expanded="false">
+          <span class="testimonial-card__content">
+            <span class="testimonial-card__quote">&ldquo;Working with Prachi was an absolute pleasure. She truly understood our vision and turned it into a logo that feels meaningful to our brand. She was patient with our feedback, never gave up on the idea, and brought it all together beautifully. We&rsquo;re so happy to see our new identity come to life!&rdquo;</span>
+            <span class="testimonial-card__author">
+              <span class="testimonial-card__avatar"></span>
+              <span class="testimonial-card__meta">Team Khushiyaan</span>
+            </span>
+          </span>
+        </button>
+        <button class="testimonial-card" type="button" aria-expanded="false">
+          <span class="testimonial-card__content">
+            <span class="testimonial-card__quote">&ldquo;Prachi absolutely nailed it! I loved the creativity and the final result, it was exactly the kind of creative direction I was looking for. I&rsquo;d happily work with her again, especially for scripting and editing. She&rsquo;s incredibly creative and brings ideas to life so well.&rdquo;</span>
+            <span class="testimonial-card__author">
+              <span class="testimonial-card__avatar"></span>
+              <span class="testimonial-card__meta">Nandini</span>
+            </span>
+          </span>
+        </button>
         <button class="testimonial-card" type="button" aria-expanded="false">
           <span class="testimonial-card__content">
             <span class="testimonial-card__quote">&ldquo;I really liked working with you! You were very understanding of what I wanted and really patient throughout the process, I also really liked how you were open to changes and made sure the work was coming together the way I had envisioned it. I&rsquo;m really happy with how everything turned out.&rdquo;</span>
@@ -544,51 +592,6 @@
             <span class="testimonial-card__author">
               <span class="testimonial-card__avatar"></span>
               <span class="testimonial-card__meta">Pallavi Mittal</span>
-            </span>
-          </span>
-        </button>
-        <button class="testimonial-card" type="button" aria-expanded="false">
-          <span class="testimonial-card__content">
-            <span class="testimonial-card__quote">&ldquo;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet.&rdquo;</span>
-            <span class="testimonial-card__author">
-              <span class="testimonial-card__avatar"></span>
-              <span class="testimonial-card__meta">Name<br>Job title</span>
-            </span>
-          </span>
-        </button>
-        <button class="testimonial-card" type="button" aria-expanded="true">
-          <span class="testimonial-card__content">
-            <span class="testimonial-card__quote">&ldquo;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet.&rdquo;</span>
-            <span class="testimonial-card__author">
-              <span class="testimonial-card__avatar"></span>
-              <span class="testimonial-card__meta">Name<br>Job title</span>
-            </span>
-          </span>
-        </button>
-        <button class="testimonial-card" type="button" aria-expanded="false">
-          <span class="testimonial-card__content">
-            <span class="testimonial-card__quote">&ldquo;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet.&rdquo;</span>
-            <span class="testimonial-card__author">
-              <span class="testimonial-card__avatar"></span>
-              <span class="testimonial-card__meta">Name<br>Job title</span>
-            </span>
-          </span>
-        </button>
-        <button class="testimonial-card" type="button" aria-expanded="false">
-          <span class="testimonial-card__content">
-            <span class="testimonial-card__quote">&ldquo;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet.&rdquo;</span>
-            <span class="testimonial-card__author">
-              <span class="testimonial-card__avatar"></span>
-              <span class="testimonial-card__meta">Name<br>Job title</span>
-            </span>
-          </span>
-        </button>
-        <button class="testimonial-card" type="button" aria-expanded="false">
-          <span class="testimonial-card__content">
-            <span class="testimonial-card__quote">&ldquo;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet.&rdquo;</span>
-            <span class="testimonial-card__author">
-              <span class="testimonial-card__avatar"></span>
-              <span class="testimonial-card__meta">Name<br>Job title</span>
             </span>
           </span>
         </button>
@@ -883,6 +886,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=234"></script>
+<script src="script.js?v=235"></script>
 </body>
 </html>

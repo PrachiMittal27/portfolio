@@ -2278,9 +2278,36 @@ body:has(.case2) .footer {
 
 .testimonial-row {
   display: flex;
+  /* Plain `center` loses the first card once this row overflows: the
+     overflow is split evenly onto BOTH sides, but scrollLeft bottoms
+     out at 0, so whatever sits left of that origin can never be
+     scrolled back to. Measured at 768px with seven cards, the leading
+     card sat at -35px and was unreachable — and it's the expanded one
+     by default, so the clipped card was the one actually being read.
+     `safe center` centres exactly as before while there's room and
+     falls back to flex-start the moment there isn't, which is the one
+     behaviour that can't hide content. The unprefixed `center` above
+     stays as the fallback for anything that doesn't know `safe`. */
   justify-content: center;
+  justify-content: safe center;
   gap: clamp(0.5rem, 1.5vw, 1rem);
-  height: clamp(380px, 40vw, 500px);
+  /* was clamp(380px, 40vw, 500px), sized when every quote here was a
+     one-line lorem placeholder. The real testimonials that replaced
+     them run 290-400 characters, and .testimonial-card's own
+     overflow:hidden CLIPS rather than scrolls — so the longest one
+     silently lost its last four lines at the old height (measured:
+     599px of content in a 500px card). Raised to fit the longest
+     real quote at every width, with the expanded card widened and
+     the quote type tightened alongside (see both below); all three
+     were needed together, since height alone would have made the
+     card a tall narrow column. */
+  /* The 480px floor is the binding value between the 640px mobile
+     breakpoint and ~1090px, where 44vw is still below it. That band
+     is the tightest case on the whole site: the expanded card is
+     pinned at its own 320px width floor too, so the quote is at its
+     narrowest and therefore its tallest. Measured at 768px, the
+     longest testimonial needs 435px; 420px clipped it by 15. */
+  height: clamp(480px, 44vw, 580px);
   overflow-x: auto;
 }
 .testimonial-card {
@@ -2294,7 +2321,10 @@ body:has(.case2) .footer {
   transition: flex-basis 550ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .testimonial-card[aria-expanded="true"] {
-  flex-basis: clamp(320px, 40vw, 460px);
+  /* was clamp(320px, 40vw, 460px) — widened along with the row's
+     height above, so the extra room for the real quotes comes from
+     both axes instead of the card growing tall and narrow. */
+  flex-basis: clamp(320px, 42vw, 520px);
 }
 .testimonial-card__content {
   display: flex;
@@ -2320,8 +2350,14 @@ body:has(.case2) .footer {
      a bigger empty gap between the quote and the author instead of
      the card reading as more substantial. Larger text fills more of
      the real space it has now. */
-  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
-  line-height: 1.65;
+  /* was clamp(1.05rem, 1.7vw, 1.35rem) / line-height 1.65, which
+     suited a single placeholder sentence with room to spare. Eased
+     down a step for the real quotes: the point of this block is now
+     that a visitor can actually read a whole client testimonial, and
+     a slightly smaller, tighter setting buys several lines without
+     the card having to grow again. */
+  font-size: clamp(1rem, 1.45vw, 1.2rem);
+  line-height: 1.55;
   font-weight: 500;
 }
 .testimonial-card__author {
@@ -2362,6 +2398,12 @@ body:has(.case2) .footer {
     scroll-snap-type: x mandatory;
     scroll-padding-inline: var(--container-pad);
     gap: 1rem;
+    /* Every card shows its full quote down here (there's no collapsed
+       state left to make), so a fixed height is the wrong constraint:
+       it can only clip. Auto lets the row take the height of the
+       longest testimonial, and flex stretches the rest to match, so
+       they still read as one even row while swiping. */
+    height: auto;
   }
   .testimonial-card,
   .testimonial-card[aria-expanded="true"] {
