@@ -2812,6 +2812,15 @@ body:has(.case2) .footer {
   color: var(--color-on-ink);
 }
 .resume-modal__sheet {
+  /* Both of these are load-bearing. A flex item's default
+     min-height:auto refuses to shrink below its content, so an A4
+     page taller than the panel made this box grow past the panel's
+     max-height instead of scrolling inside it — and .resume-modal__
+     panel's own overflow:hidden then clipped the bottom of the CV
+     with no scrollbar to recover it. min-height:0 lets it be
+     constrained; flex:1 lets it take the space the bar doesn't. */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   padding: clamp(0.75rem, 2.5vw, 1.25rem);
