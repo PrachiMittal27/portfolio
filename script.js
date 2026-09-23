@@ -2659,6 +2659,23 @@
       else hideTimer = setTimeout(finish, 280); // matches .resume-modal__panel
     };
 
+    // Belt and braces next to the sheet's own data-lenis-prevent
+    // attribute (see Index.html). Lenis binds its wheel handler to the
+    // window, so stopping propagation at the sheet means the event
+    // never reaches Lenis at all — independent of how a given Lenis
+    // version orders its prevent-attribute check against its stopped
+    // state, which is the part that can't be verified from here.
+    //
+    // Deliberately NOT preventDefault: that's what leaves the browser
+    // free to scroll this box natively, which is the whole point. The
+    // only other wheel listener on the site is the one-shot
+    // unmute-on-first-interaction hook in initTvShowcase, which still
+    // fires on any pointerdown/keydown/touchstart elsewhere.
+    const sheet = modal.querySelector('.resume-modal__sheet');
+    if (sheet) {
+      sheet.addEventListener('wheel', (event) => event.stopPropagation(), { passive: true });
+    }
+
     triggers.forEach((t) => {
       t.addEventListener('click', (event) => {
         event.preventDefault();

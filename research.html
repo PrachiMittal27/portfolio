@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=237">
+<link rel="stylesheet" href="styles.css?v=238">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -188,7 +188,17 @@
       </div>
     </div>
 
-    <div class="resume-modal__sheet" tabindex="0">
+    <!--
+        data-lenis-prevent: Lenis hijacks the wheel globally, and
+        lenisInstance.stop() only stops it SCROLLING - it still
+        swallows the event, so a trackpad over this panel moved
+        nothing at all. Lenis checks this attribute before its own
+        stopped-state handling, so wheel events that start inside
+        here fall through to native scrolling. Touch devices never
+        hit this (initLenis only runs on a fine pointer), which is
+        why the CV scrolled on a phone while a laptop was stuck.
+      -->
+      <div class="resume-modal__sheet" tabindex="0" data-lenis-prevent>
       <img class="resume-modal__page" data-resume-img
            data-src="assets/resume-2025.jpg"
            width="1407" height="1989"
@@ -201,6 +211,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=237"></script>
+<script src="script.js?v=238"></script>
 </body>
 </html>
