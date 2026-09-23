@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=235">
+<link rel="stylesheet" href="styles.css?v=236">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -38,7 +38,7 @@
       <ul class="primary-nav__categories" id="primary-nav-list">
         <li><a class="nav-link" href="index.html#projects">Project</a></li>
         <li><a class="nav-link" href="index.html#about">About Me</a></li>
-        <li><a class="nav-link" href="index.html#resume">Resume</a></li>
+        <li><a class="nav-link" href="#resume">Resume</a></li>
         <li><a class="nav-link" href="index.html#connect">Contact</a></li>
       </ul>
     </nav>
@@ -172,10 +172,54 @@
 -->
 <div class="cursor-glow" aria-hidden="true"></div>
 
+<!--
+  Resume viewer. The nav's "Resume" link has pointed at #resume since
+  the first build, with nothing of that id anywhere on the site — this
+  is what it now opens. It lives on every page (not just the homepage)
+  so the link never has to navigate away from a case study to answer.
+
+  Shown as a rendered page image rather than an embedded PDF on
+  purpose: <iframe src="*.pdf"> draws a blank box or force-downloads
+  on iOS Safari and several Android browsers, which is exactly where a
+  recruiter is most likely to tap it. assets/resume-2025.jpg is page 1
+  at 170dpi via PyMuPDF — the same approach editorial.html's
+  brand-guidelines flip-book already uses — and the real PDF sits
+  behind the download button for anyone who wants the file itself
+  (that's also the accessible copy, since this one is an image of
+  text).
+
+  The <img> deliberately carries no src attribute: initResumeModal
+  (script.js) copies data-src into it the first time the dialog is
+  opened, so a 350KB image nobody asked for never loads on a page
+  view that never touches it.
+-->
+<div class="resume-modal" id="resume" hidden>
+  <div class="resume-modal__backdrop" data-resume-close></div>
+
+  <div class="resume-modal__panel" role="dialog" aria-modal="true" aria-labelledby="resume-modal-title">
+    <div class="resume-modal__bar">
+      <h2 class="resume-modal__title" id="resume-modal-title">Resume</h2>
+      <div class="resume-modal__actions">
+        <a class="btn-pill btn-pill--accent resume-modal__download" href="assets/Prachi%20Mittal_CV2025.pdf" download>Download PDF</a>
+        <button class="resume-modal__close" type="button" aria-label="Close resume" data-resume-close>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="resume-modal__sheet" tabindex="0">
+      <img class="resume-modal__page" data-resume-img
+           data-src="assets/resume-2025.jpg"
+           width="1407" height="1989"
+           alt="Prachi Mittal&rsquo;s one-page resume: graphic designer, with education, internship experience, software skills and contact details. The PDF download above is the text version.">
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=235"></script>
+<script src="script.js?v=236"></script>
 </body>
 </html>

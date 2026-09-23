@@ -2576,6 +2576,124 @@
     });
   }
 
+  /* ---------------- Resume dialog ----------------
+     The nav's "Resume" link opens .resume-modal in place on whichever
+     page it was clicked from — every page carries the markup, so it
+     never navigates away from a case study to answer. See the comment
+     on .resume-modal in Index.html for why the CV is a rendered image
+     rather than an embedded PDF.
+
+     This is the plain-HTML version of the contract a native <dialog>
+     would give for free, written out because <dialog>'s own ::backdrop
+     can't carry the blurred glass treatment used everywhere else here:
+     the page behind stops scrolling (Lenis included — body overflow
+     alone does not hold it on iOS), focus moves into the panel and is
+     trapped there, Escape closes, and focus returns to whatever opened
+     it. */
+  function initResumeModal() {
+    const modal = document.querySelector('.resume-modal');
+    if (!modal) return;
+
+    const panel = modal.querySelector('.resume-modal__panel');
+    const img = modal.querySelector('[data-resume-img]');
+    const closeBtn = modal.querySelector('.resume-modal__close');
+    const triggers = Array.from(
+      document.querySelectorAll('a[href="#resume"], a[href$="index.html#resume"]')
+    );
+
+    // Tracked separately from the `hidden` attribute because closing
+    // leaves the panel mounted for the length of its fade — without
+    // this, re-opening mid-fade would read as "already open" and do
+    // nothing, leaving a half-faded dialog stuck on screen.
+    let isOpen = false;
+    let hideTimer = null;
+    let lastFocused = null;
+
+    const focusable = () =>
+      Array.from(panel.querySelectorAll('a[href], button:not([disabled]), [tabindex="0"]'))
+        .filter((el) => el.offsetParent !== null);
+
+    const open = () => {
+      if (isOpen) return;
+      isOpen = true;
+      clearTimeout(hideTimer);
+      lastFocused = document.activeElement;
+
+      // First open only: the render's URL sits in data-src so a 350KB
+      // image never loads on a page view that never opens this.
+      if (img && !img.getAttribute('src') && img.dataset.src) {
+        img.setAttribute('src', img.dataset.src);
+      }
+
+      modal.hidden = false;
+      document.body.classList.add('resume-open');
+      if (lenisInstance) lenisInstance.stop();
+
+      // One frame later, so the browser paints the shown-but-transparent
+      // state first and the transition actually runs from it instead of
+      // the panel snapping straight to its end state.
+      requestAnimationFrame(() => modal.classList.add('is-open'));
+      if (closeBtn) closeBtn.focus();
+    };
+
+    const close = () => {
+      if (!isOpen) return;
+      isOpen = false;
+      modal.classList.remove('is-open');
+      document.body.classList.remove('resume-open');
+      if (lenisInstance) lenisInstance.start();
+
+      // Drop the #resume hash without pushing a history entry, so a
+      // reload or a Back press doesn't silently reopen the dialog.
+      if (location.hash === '#resume') {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+
+      const finish = () => {
+        modal.hidden = true;
+        // Restored only once the panel is actually gone; moving focus
+        // back while it's still fading would scroll the page behind it.
+        if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+      };
+      if (prefersReducedMotion()) finish();
+      else hideTimer = setTimeout(finish, 280); // matches .resume-modal__panel
+    };
+
+    triggers.forEach((t) => {
+      t.addEventListener('click', (event) => {
+        event.preventDefault();
+        open();
+      });
+    });
+    modal.querySelectorAll('[data-resume-close]').forEach((el) => {
+      el.addEventListener('click', close);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (!isOpen) return;
+      if (event.key === 'Escape') {
+        close();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    // A shared or bookmarked .../#resume should arrive with it open.
+    if (location.hash === '#resume') open();
+  }
+
   /* ---------------- Custom cursor glow ----------------
      Rides alongside the recoloured native-shaped cursor (styles.css)
      — that one keeps the OS arrow's silhouette and just reflects the
@@ -2697,6 +2815,7 @@
     initAboutStats();
     initTestimonials();
     initContactForm();
+    initResumeModal();
     initPhilosophyScroll();
     initFlyingCard();
     initAboutDoodles();

@@ -2701,6 +2701,162 @@ body:has(.case2) .footer {
 }
 
 /* ---------------------------------------------------------------
+   Resume dialog
+   ---------------------------------------------------------------
+   Opened by the nav's "Resume" link on every page — see the comment
+   on .resume-modal in Index.html for why the CV is shown as a
+   rendered page image rather than an embedded PDF, and
+   initResumeModal in script.js for the focus/scroll handling.
+--------------------------------------------------------------- */
+.resume-modal {
+  position: fixed;
+  inset: 0;
+  /* above --z-header (60); .cursor-glow's own 9999 still wins, which
+     is right — the cursor belongs on top of everything */
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 2.5rem);
+}
+/* The UA stylesheet's [hidden] { display: none } is a bare attribute
+   selector, so the class rule above outranks it and the dialog would
+   sit open over the page on every load. This puts it back. */
+.resume-modal[hidden] {
+  display: none;
+}
+.resume-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(33, 26, 20, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+.resume-modal.is-open .resume-modal__backdrop {
+  opacity: 1;
+}
+.resume-modal__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(880px, 100%);
+  /* dvh, not vh: on mobile Safari the browser chrome is part of vh, so
+     a 92vh panel is taller than what you can actually see and the
+     close button ends up under the address bar */
+  max-height: 92dvh;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  border-radius: 1rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(12px) scale(0.985);
+  transition: opacity 280ms ease, transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.resume-modal.is-open .resume-modal__panel {
+  opacity: 1;
+  transform: none;
+}
+.resume-modal__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.85rem, 2.5vw, 1.15rem) clamp(1rem, 3vw, 1.5rem);
+  border-bottom: 1px solid rgba(33, 26, 20, 0.12);
+}
+.resume-modal__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.15rem, 1.2vw + 0.9rem, 1.5rem);
+  letter-spacing: -0.02em;
+}
+.resume-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vw, 0.85rem);
+}
+/* .btn-pill's own size is tuned for a section CTA and reads oversized
+   in a dialog bar — only the box shrinks here, the colour and radius
+   stay exactly the shared button's so it's still recognisably the
+   same control. */
+.resume-modal__download {
+  font-size: 0.9rem;
+  padding: 0.55rem 1.25rem;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.resume-modal__close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  color: var(--color-ink);
+  background: rgba(33, 26, 20, 0.06);
+  transition: background 200ms ease, color 200ms ease;
+}
+.resume-modal__close svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.resume-modal__close:hover,
+.resume-modal__close:focus-visible {
+  background: var(--color-why);
+  color: var(--color-on-ink);
+}
+.resume-modal__sheet {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(0.75rem, 2.5vw, 1.25rem);
+  background: rgba(33, 26, 20, 0.05);
+}
+.resume-modal__page {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.4rem;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  /* the render is an A4 sheet, so give it paper to sit on while it
+     decodes rather than the panel's own cream showing through */
+  background: #fff;
+}
+/* Below this width the rounded floating panel wastes most of the
+   screen on backdrop: an A4 page needs every pixel of width it can
+   get to stay readable, so it takes the whole viewport instead. */
+@media (max-width: 560px) {
+  .resume-modal {
+    padding: 0;
+  }
+  .resume-modal__panel {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .resume-modal__download {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.95rem;
+  }
+}
+/* Set by initResumeModal while the dialog is open. Lenis is told to
+   stop as well (script.js) — this alone doesn't hold on iOS. */
+body.resume-open {
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .resume-modal__panel {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------
    Reduced motion
 --------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
