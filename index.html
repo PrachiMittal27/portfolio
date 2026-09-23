@@ -20,20 +20,29 @@
   bought domain, that origin has to change in all 7 pages — one
   find/replace, and the subfolder goes away with it. See README.
 
-  og:image points at an existing project thumbnail rather than a
-  purpose-made card: crawlers centre-crop whatever they get to roughly
-  1.91:1, and these crop acceptably. A real 1200x630 card per page is
-  a one-line swap here whenever there's art for it. The portrait is
-  deliberately not used — it's a portrait-orientation photo, so a
-  landscape centre-crop cuts the face.
+  og:image here is a purpose-made card (assets/og-home.jpg): the logo
+  on --color-cream, built at exactly 1200x630, which is the ratio
+  crawlers crop to — so nothing gets cropped at all. It replaced a
+  project thumbnail that previewed fine but made a link to the whole
+  portfolio look like it was about one client's packaging.
+
+  The case-study pages each point at their own project's thumbnail
+  instead, which is right for them (a link to the Toblerone page
+  should preview as Toblerone) and crops acceptably. research.html
+  has no art of its own, so it borrows this same card rather than
+  another project's photo.
+
+  The portrait is deliberately not used anywhere here — it's a
+  portrait-orientation photo, so a landscape centre-crop cuts the
+  face.
 -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prachi Mittal">
 <meta property="og:title" content="Prachi Mittal, Communication Designer">
 <meta property="og:description" content="Prachi Mittal, a communication designer driven by curiosity.">
 <meta property="og:url" content="https://prachimittal27.github.io/portfolio/">
-<meta property="og:image" content="https://prachimittal27.github.io/portfolio/assets/thumbnails/packaging.jpg">
-<meta property="og:image:alt" content="An open hexagonal Toblerone vault box beside its lid, which reads &ldquo;Open the Vault.&rdquo;">
+<meta property="og:image" content="https://prachimittal27.github.io/portfolio/assets/og-home.jpg">
+<meta property="og:image:alt" content="The Prachi Mittal logo: a line-drawn nautilus shell beside the words &ldquo;Prachi Mittal, driven by curiosity.&rdquo;">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
