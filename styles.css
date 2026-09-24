@@ -3739,6 +3739,16 @@ body.resume-open {
   flex: 0 0 auto;
   text-align: center;
 }
+/* The Big Bang Theory — same left-packed, content-sized pills as
+   BGL/Hamleys/Toblerone, per direct request to match. */
+#case-hero-bigbang .case2-role__pills {
+  justify-content: flex-start;
+  gap: 1.5rem;
+}
+#case-hero-bigbang .case2-pill {
+  flex: 0 0 auto;
+  text-align: center;
+}
 .case2-section {
   max-width: var(--case2-col-width);
   margin-top: clamp(3rem, 7vw, 5rem);
@@ -4155,4 +4165,21 @@ body.resume-open {
   .flipbook__page {
     transition-duration: 0.01ms !important;
   }
+}
+
+/* The Big Bang Theory page: the final video documentation (16:9), and
+   its flipbook uses square pages (612x612 source PDF) instead of the
+   Hamleys deck's 3:2 slides, so the two-page stage is 2:1, not
+   1422:475. */
+.case2-shot--video video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.flipbook--square {
+  max-width: 900px;
+}
+.flipbook--square .flipbook__stage {
+  aspect-ratio: 2 / 1;
 }

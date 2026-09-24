@@ -2007,13 +2007,6 @@
     // separate from a visitor's own manual pause (the play button) so
     // scrolling back into view doesn't override a deliberate choice.
     let autoPaused = false;
-    // True once the set has scrolled into view at least once. The
-    // video deliberately does not start — or even begin downloading —
-    // before that: see the comment on the <video> tag in Index.html
-    // for why an eager autoplay was costing the hero ~21.8MB of
-    // contended bandwidth it never needed.
-    let hasEnteredView = false;
-    let retryTimer = null;
 
     const updateSoundButton = () => {
       soundBtn.setAttribute('aria-pressed', String(soundOn));
@@ -2068,35 +2061,8 @@
     // and resumes from exactly where it left off on the way back in —
     // per direct request — but only if it was actually playing, and
     // only if this observer is what paused it (not a visitor's own
-    // manual pause via the play button).
-    // Was called unconditionally at init (plus the <video>'s own
-    // `autoplay`); now the in-view observer below owns the first call,
-    // so the ~21.8MB file isn't fetched while the hero is still on
-    // screen. Everything inside is the original start-and-keep-retrying
-    // behaviour, just moved into a function so it can be triggered
-    // later — the retry loop still self-cancels the moment playback
-    // reports success or the set scrolls back out of view.
-    const startPlayback = () => {
-      video.play().catch(() => {});
-      if (retryTimer) return;
-      let retries = 0;
-      const MAX_RETRIES = 20; // ~10s at 500ms apart
-      retryTimer = setInterval(() => {
-        retries += 1;
-        const inView = !showcase || showcase.dataset.inView !== 'false';
-        if (!inView || (!video.paused && !video.ended)) {
-          clearInterval(retryTimer);
-          retryTimer = null;
-          return;
-        }
-        video.play().catch(() => {});
-        if (retries >= MAX_RETRIES) {
-          clearInterval(retryTimer);
-          retryTimer = null;
-        }
-      }, 500);
-    };
-
+    // manual pause via the play button). Playback itself never starts
+    // on its own — only the play button starts it (per direct request).
     if (showcase && 'IntersectionObserver' in window) {
       showcase.dataset.inView = 'true';
       const observer = new IntersectionObserver(
@@ -2104,12 +2070,7 @@
           showcase.dataset.inView = String(entry.isIntersecting);
           applyMuted();
           if (entry.isIntersecting) {
-            if (!hasEnteredView) {
-              // First time on screen — this is where playback (and,
-              // with preload="none", the download) actually begins.
-              hasEnteredView = true;
-              startPlayback();
-            } else if (autoPaused) {
+            if (autoPaused) {
               autoPaused = false;
               video.play().catch(() => {});
             }
@@ -2127,7 +2088,7 @@
       // is actually visible, so the download has a head start and the
       // screen isn't black for the first second or two once it does
       // arrive. Only flips preload and asks for the bytes — playback
-      // stays entirely the business of the threshold observer above.
+      // stays entirely the business of the play button.
       // Disconnects itself after one shot; a second load() would
       // restart a fetch that's already in flight.
       //
@@ -2162,16 +2123,6 @@
     updateSoundButton();
     updatePlayButton();
     applyMuted();
-
-    // No IntersectionObserver at all (or no .tv-showcase wrapper to
-    // observe): nothing can report when the set comes into view, so
-    // fall back to the old behaviour of starting immediately rather
-    // than leaving the video permanently stopped.
-    if (!showcase || !('IntersectionObserver' in window)) {
-      hasEnteredView = true;
-      video.preload = 'auto';
-      startPlayback();
-    }
 
     if (!frame || prefersReducedMotion()) return;
 
