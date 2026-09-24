@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=241">
+<link rel="stylesheet" href="styles.css?v=251">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -64,16 +64,6 @@
       <h1 class="case2-title">The Big Bang Theory</h1>
       <p class="case2-meta">Interactive Book | Editorial Design</p>
 
-      <div class="case2-role">
-        <p class="case2-role__label">My Role:</p>
-        <div class="case2-role__pills">
-          <span class="case2-pill">Editorial Design</span>
-          <span class="case2-pill">Illustration</span>
-          <span class="case2-pill">Interaction Design</span>
-          <span class="case2-pill">Print Production</span>
-        </div>
-      </div>
-
       <div class="case2-shots case2-shots--wide">
         <figure class="case2-shot case2-shot--video"><video controls playsinline preload="metadata" src="assets/tousebigbang/0.mp4" aria-label="The final video documentation of The Big Bang Theory interactive book"></video></figure>
       </div>
@@ -89,12 +79,24 @@
         <p>I chose The Big Bang Theory to create a fun, interactive book for fans, moving from the show&rsquo;s origins to its characters, relationships, and friendships. Each section turns a character trait or memorable moment into an interactive experience, supported by comic-inspired visuals, bold typography, and playful elements. The book also includes bonus sticker/reward pages and explores different printing techniques such as die-cutting, holographic foiling, collagraph, and screen printing to make the physical experience more&nbsp;engaging.</p>
       </div>
       <div class="case2-shots case2-shots--pair case2-shots--pair-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/3.jpg" alt="The topics explored across the book, from the show's origins to its characters and friendships." loading="lazy"></figure>
-        <figure class="case2-shot"><img src="assets/tousebigbang/1.jpg" alt="A moodboard of comic-book, sitcom, and scientific references for the book." loading="lazy"></figure>
+        <div class="case2-shot-group">
+          <figure class="case2-shot"><img src="assets/tousebigbang/3.jpg" alt="The topics explored across the book, from the show's origins to its characters and friendships." loading="lazy"></figure>
+          <p class="case2-shot__caption">Topics Explored</p>
+        </div>
+        <div class="case2-shot-group">
+          <figure class="case2-shot"><img src="assets/tousebigbang/1.jpg" alt="A moodboard of comic-book, sitcom, and scientific references for the book." loading="lazy"></figure>
+          <p class="case2-shot__caption">Moodboard</p>
+        </div>
       </div>
       <div class="case2-shots case2-shots--pair case2-shots--pair-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/2.jpg" alt="The printing techniques used, including die-cutting, holographic foiling, collagraph, and screen printing." loading="lazy"></figure>
-        <figure class="case2-shot"><img src="assets/tousebigbang/4.jpg" alt="Pop-up references that inspired the book's interactive pages." loading="lazy"></figure>
+        <div class="case2-shot-group">
+          <figure class="case2-shot"><img src="assets/tousebigbang/2.jpg" alt="The printing techniques used, including die-cutting, holographic foiling, collagraph, and screen printing." loading="lazy"></figure>
+          <p class="case2-shot__caption">Printing Techniques Used</p>
+        </div>
+        <div class="case2-shot-group">
+          <figure class="case2-shot"><img src="assets/tousebigbang/4.jpg" alt="Pop-up references that inspired the book's interactive pages." loading="lazy"></figure>
+          <p class="case2-shot__caption">Pop-Up References</p>
+        </div>
       </div>
 
       <div class="case2-section">
@@ -104,12 +106,14 @@
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
         <figure class="case2-shot"><img src="assets/tousebigbang/5.jpg" alt="Layout iterations sketching different page structures and interactive mechanisms." loading="lazy"></figure>
       </div>
+      <p class="case2-shot__caption">Layout Iterations</p>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
         <figure class="case2-shot"><img src="assets/tousebigbang/6.jpg" alt="Printing the book's pages during draft and final production." loading="lazy"></figure>
       </div>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
         <figure class="case2-shot"><img src="assets/tousebigbang/7.jpg" alt="Pasting and assembling the printed pages into the finished book." loading="lazy"></figure>
       </div>
+      <p class="case2-shot__caption">Printing and Pasting</p>
 
       <div class="case2-section">
         <h2 class="case2-section__heading">Visual Identity</h2>
@@ -130,31 +134,39 @@
         <p><strong>The Final Scene</strong><br>Bringing the whole gang together in their iconic living-room&nbsp;setting.</p>
         <p><strong>Big Bang Bonus</strong><br>A collection of custom stickers and rewards inspired by the show&rsquo;s characters, symbols, and iconic&nbsp;moments.</p>
       </div>
-      <div class="flipbook flipbook--square" data-flipbook aria-label="Digital version of The Big Bang Theory book, all pages">
+      <div class="flipbook flipbook--square flipbook--spread" data-spreadbook aria-label="Digital version of The Big Bang Theory book, all pages">
         <div class="flipbook__stage">
-          <div class="flipbook__left" data-flipbook-left>
-            <img data-flipbook-left-img alt="" hidden>
-          </div>
+          <div class="flipbook__left" data-sb-left></div>
           <div class="flipbook__right-stack">
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-1.jpg" alt="The Big Bang Theory interactive book, page 1." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-2.jpg" alt="The Big Bang Theory interactive book, page 2." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-3.jpg" alt="The Big Bang Theory interactive book, page 3." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-4.jpg" alt="The Big Bang Theory interactive book, page 4." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-5.jpg" alt="The Big Bang Theory interactive book, page 5." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-6.jpg" alt="The Big Bang Theory interactive book, page 6." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-7.jpg" alt="The Big Bang Theory interactive book, page 7." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-8.jpg" alt="The Big Bang Theory interactive book, page 8." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-9.jpg" alt="The Big Bang Theory interactive book, page 9." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-10.jpg" alt="The Big Bang Theory interactive book, page 10." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-11.jpg" alt="The Big Bang Theory interactive book, page 11." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-12.jpg" alt="The Big Bang Theory interactive book, page 12." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-13.jpg" alt="The Big Bang Theory interactive book, page 13." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-14.jpg" alt="The Big Bang Theory interactive book, page 14." loading="lazy"></div>
-            <div class="flipbook__page" data-flipbook-page><img src="assets/tousebigbang/pages/page-15.jpg" alt="The Big Bang Theory interactive book, page 15." loading="lazy"></div>
+            <div class="flipbook__page" data-sb-under></div>
+            <div class="flipbook__page" data-sb-leaf style="z-index: 2"></div>
           </div>
         </div>
         <div class="flipbook__controls">
+          <button type="button" class="flipbook__btn" data-flipbook-prev aria-label="Previous page">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 L8 12 L15 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
           <span class="flipbook__count"><span data-flipbook-current>1</span> / <span data-flipbook-total>15</span></span>
+          <button type="button" class="flipbook__btn" data-flipbook-next aria-label="Next page">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5 L16 12 L9 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div data-sb-sources hidden>
+          <img data-kind="cover" src="assets/tousebigbang/pages/page-1.jpg" alt="The Big Bang Theory interactive book, front cover.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-2.jpg" alt="The Big Bang Theory interactive book, spread 1 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-3.jpg" alt="The Big Bang Theory interactive book, spread 2 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-4.jpg" alt="The Big Bang Theory interactive book, spread 3 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-5.jpg" alt="The Big Bang Theory interactive book, spread 4 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-6.jpg" alt="The Big Bang Theory interactive book, spread 5 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-7.jpg" alt="The Big Bang Theory interactive book, spread 6 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-8.jpg" alt="The Big Bang Theory interactive book, spread 7 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-9.jpg" alt="The Big Bang Theory interactive book, spread 8 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-10.jpg" alt="The Big Bang Theory interactive book, spread 9 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-11.jpg" alt="The Big Bang Theory interactive book, spread 10 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-12.jpg" alt="The Big Bang Theory interactive book, spread 11 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-13.jpg" alt="The Big Bang Theory interactive book, spread 12 of 13.">
+          <img data-kind="spread" src="assets/tousebigbang/pages/page-14.jpg" alt="The Big Bang Theory interactive book, spread 13 of 13.">
+          <img data-kind="back" src="assets/tousebigbang/pages/page-15.jpg" alt="The Big Bang Theory interactive book, back cover.">
         </div>
       </div>
       <p class="case2-shot__caption">Digital version of the book</p>
@@ -264,6 +276,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=241"></script>
+<script src="script.js?v=251"></script>
 </body>
 </html>

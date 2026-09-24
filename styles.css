@@ -3741,14 +3741,6 @@ body.resume-open {
 }
 /* The Big Bang Theory — same left-packed, content-sized pills as
    BGL/Hamleys/Toblerone, per direct request to match. */
-#case-hero-bigbang .case2-role__pills {
-  justify-content: flex-start;
-  gap: 1.5rem;
-}
-#case-hero-bigbang .case2-pill {
-  flex: 0 0 auto;
-  text-align: center;
-}
 .case2-section {
   max-width: var(--case2-col-width);
   margin-top: clamp(3rem, 7vw, 5rem);
@@ -4047,7 +4039,7 @@ body.resume-open {
 }
 
 /* ---------------- Brand guidelines flip-book ----------------
-   A real page-turn, not a plain image gallery — see initFlipbook in
+   A real page-turn, not a plain image gallery — see initSpreadBook in
    script.js. .flipbook__left is one static, non-animating panel (the
    left-hand page never itself moves, exactly like a real book); the
    real pages live in .flipbook__right-stack, absolutely stacked in
@@ -4072,7 +4064,10 @@ body.resume-open {
   aspect-ratio: 1422 / 475;
   perspective: 2400px;
   border-radius: 10px;
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
+  /* no drop shadow: it's cast by the whole two-page box, so while a
+     lone cover sits centred (or slides out as the book opens) it
+     outlined the empty half as a dark block — removed per direct
+     request. */
 }
 /* A permanent, non-animating shadow down the centre — sells the
    spine even while a page is mid-flip above it (z-index below every
@@ -4093,7 +4088,18 @@ body.resume-open {
     rgba(0, 0, 0, 0.16)
   );
   pointer-events: none;
-  z-index: 1;
+  /* Was z-index 1 — below the turning leaf (z-index 2, set inline by
+     initSpreadBook), so the leaf covered the spine's right half at rest,
+     uncovered it mid-turn and covered it again when it snapped back,
+     which read as the spine flickering. Sitting above every page, on its
+     own compositing layer (translateZ) so the leaf's GPU layer during a
+     3D turn can't paint over it either, it stays steady throughout. */
+  z-index: 5;
+  transform: translateZ(0);
+  will-change: opacity;
+  /* fades with the cover slide (same 0.85s) instead of popping off and
+     back on when a lone cover comes or goes */
+  transition: opacity 0.85s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .flipbook__left,
 .flipbook__right-stack {
@@ -4104,9 +4110,8 @@ body.resume-open {
 }
 .flipbook__left {
   left: 0;
-  /* the "inside cover" look before the first page has been turned —
-     initFlipbook swaps in the real (already-turned) page's image
-     here once there is one. */
+  /* the "inside cover" colour behind the left page — initSpreadBook
+     paints the current spread's left page on top of it. */
   background: var(--color-ink-soft);
   border-radius: 10px 0 0 10px;
   overflow: hidden;
@@ -4131,7 +4136,7 @@ body.resume-open {
   backface-visibility: hidden;
   /* the flip's own duration was correct as-is per direct follow-up
      request — only the rest period between flips was too long, not
-     the turn itself. Must match TURN_MS in initFlipbook (script.js),
+     the turn itself. Must match TURN_MS in initSpreadBook (script.js),
      which keys its setTimeout calls off this same duration. */
   transition: transform 0.85s cubic-bezier(0.65, 0, 0.35, 1);
   border-radius: 0 10px 10px 0;
@@ -4147,7 +4152,38 @@ body.resume-open {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 1.25rem;
   margin-top: 1.25rem;
+}
+/* Prev/next arrows either side of the page count — the books still
+   autoplay; these are for jumping ahead or back faster, and re-arm the
+   same autoplay timer rather than fighting it. */
+.flipbook__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-why);
+  color: var(--color-on-ink);
+  cursor: pointer;
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+.flipbook__btn:hover,
+.flipbook__btn:focus-visible {
+  transform: translateY(-2px);
+}
+.flipbook__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
+}
+.flipbook__btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 .flipbook__count {
   font-family: var(--font-display);
@@ -4182,4 +4218,35 @@ body.resume-open {
 }
 .flipbook--square .flipbook__stage {
   aspect-ratio: 2 / 1;
+}
+
+/* Spread flipbook (Big Bang Theory): the turning leaf and the page
+   underneath both need a solid inside-cover colour when one side of a
+   cover has no image at all. */
+.flipbook--spread .flipbook__page {
+  background: var(--color-ink-soft);
+}
+
+/* Covers show a single page, centred, instead of a half-empty book:
+   the front cover (right page only) slides the right stack over to the
+   middle; the back cover (left page only) does the same for the left
+   panel. The spine is dropped in those states
+   and the visible page gets full rounding. */
+.flipbook--spread .flipbook__right-stack,
+.flipbook--spread .flipbook__left {
+  transition: transform 0.85s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.flipbook--spread.is-cover .flipbook__right-stack {
+  transform: translateX(-50%);
+}
+.flipbook--spread.is-back .flipbook__left {
+  transform: translateX(50%);
+}
+.flipbook--spread.is-cover .flipbook__stage::after,
+.flipbook--spread.is-back .flipbook__stage::after {
+  opacity: 0;
+}
+.flipbook--spread.is-cover .flipbook__page,
+.flipbook--spread.is-back .flipbook__left {
+  border-radius: 10px;
 }

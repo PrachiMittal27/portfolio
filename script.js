@@ -793,195 +793,219 @@
     });
   }
 
-  /* ---------------- Brand guidelines flip-book ----------------
-     .flipbook (case2-shots come between .case2-section blocks; see
-     editorial.html's "Brand Guidelines" section) — a real page-turn,
-     not a plain image gallery or a whole-spread swap. Per direct
-     follow-up request ("the page should flip like a book from the
-     middle"), the left-hand page (.flipbook__left) never itself
-     moves — only the right-hand page turns, pivoting at the stage's
-     centre spine, exactly like an actual book. The real pages sit
-     stacked in .flipbook__right-stack, each with transform-origin:
-     left center — since that stack is positioned at the stage's own
-     right half, "left" for each page IS the spine, not the book's
-     outer edge.
-
-     "next": rotate the current top of the right stack to -180deg;
-     once it's rotated past 90deg (backface-visibility hidden makes it
-     vanish at that point, HALF_MS below), copy that same page's image
-     into .flipbook__left — the page has visually "landed" on the left
-     at exactly the moment it disappears from the right, same as
-     turning a real leaf. Once the full transition ends, drop it to
-     the back of the right stack (z-index 0) so it's ready to flip
-     again on the next lap. "prev" does the same in reverse: raise the
-     previous page back to the top of the right stack, animate it from
-     -180 back to 0, and swap .flipbook__left back to whatever was
-     showing before it (or blank, at the very first page).
-
-     Auto-advances on its own timer (scheduleAuto/AUTO_MS) — per direct
-     request, flipping is automatic, not something a visitor has to
-     click through — per a direct follow-up request, there are no
-     prev/next buttons at all any more (just the page counter); this
-     still tolerates them being there if a future page adds them back
-     (updateButtons/the click listeners below are no-ops without one).
-     Reaching the last page doesn't stop the loop — resetToStart()
-     fades the stage out, snaps every page back to its starting
-     transform/z-index (instant, not 49 reverse-flips), fades back in,
-     and autoplay carries on from page 1. */
-  function initFlipbook() {
-    const books = gsap.utils.toArray('[data-flipbook]');
-    books.forEach((book) => {
-      const pages = gsap.utils.toArray('[data-flipbook-page]', book);
-      const leftImg = book.querySelector('[data-flipbook-left-img]');
-      const prevBtn = book.querySelector('[data-flipbook-prev]');
-      const nextBtn = book.querySelector('[data-flipbook-next]');
+  /* ---------------- Spread flipbooks (Big Bang Theory book, Hamleys brand guidelines) ----------------
+     An open book that turns a whole spread at a time. The Big Bang PDF's
+     pages are already *spreads*: page 1 and the last page are single
+     covers, everything between is one image holding both the left and
+     right page. So one turn has to swap the whole spread — the right
+     half of the current spread lifts and turns about the spine while
+     the next spread's right half is already underneath, and the left
+     half is replaced by the next spread's left half at the moment the
+     turning leaf passes 90deg (when backface-visibility hides it). Each
+     half is just the full image scaled to 200% and shifted, so no
+     pre-cut half images are needed. Covers occupy a single side (front
+     cover on the right, back cover on the left) with the empty side
+     left as the plain inside-cover colour. The Hamleys deck is one page
+     per image instead, so it's listed as data-kind="pair" sources.
+     Autoplays, with prev/next arrows. */
+  function initSpreadBook() {
+    document.querySelectorAll('[data-spreadbook]').forEach((book) => {
+      // Two kinds of source: an <img> whose picture is a whole spread
+      // (or a lone cover), or a data-kind="pair" element naming two
+      // separate single-page images, one per side — so a deck exported
+      // one page per image still turns two pages at a time like a book.
+      const items = [...book.querySelectorAll('[data-sb-sources] > *')].map((el) => (
+        el.dataset.kind === 'pair'
+          ? {
+            kind: 'pair',
+            left: el.dataset.left,
+            right: el.dataset.right,
+            leftAlt: el.dataset.leftAlt || '',
+            rightAlt: el.dataset.rightAlt || '',
+          }
+          : { kind: el.dataset.kind, src: el.getAttribute('src'), alt: el.getAttribute('alt') || '' } // cover | spread | back
+      ));
+      const leftEl = book.querySelector('[data-sb-left]');
+      const underEl = book.querySelector('[data-sb-under]');
+      const leafEl = book.querySelector('[data-sb-leaf]');
       const currentEl = book.querySelector('[data-flipbook-current]');
       const totalEl = book.querySelector('[data-flipbook-total]');
       const stage = book.querySelector('.flipbook__stage');
-      if (pages.length < 2 || !leftImg) return;
+      const prevBtn = book.querySelector('[data-flipbook-prev]');
+      const nextBtn = book.querySelector('[data-flipbook-next]');
+      if (items.length < 2 || !leftEl || !underEl || !leafEl) return;
 
-      const total = pages.length;
-      // How many pages have been turned onto the left so far — the
-      // page still face-up on the right is pages[current].
-      let current = 0;
-      let animating = false;
+      const total = items.length;
       const reduceMotion = prefersReducedMotion();
-
-      pages.forEach((page, i) => {
-        page.style.zIndex = total - i;
-      });
-      if (totalEl) totalEl.textContent = String(total);
-      const updateCount = () => {
-        if (currentEl) currentEl.textContent = String(current + 1);
-      };
-      const updateButtons = () => {
-        if (prevBtn) prevBtn.disabled = current <= 0;
-        if (nextBtn) nextBtn.disabled = current >= total - 1;
-      };
-      const setLeft = (page) => {
-        if (!page) {
-          leftImg.hidden = true;
-          leftImg.removeAttribute('src');
-          return;
-        }
-        const src = page.querySelector('img');
-        leftImg.src = src.src;
-        leftImg.alt = src.alt;
-        leftImg.hidden = false;
-      };
-      updateCount();
-      updateButtons();
-
-      // TURN_MS must match .flipbook__page's own transition-duration
-      // (styles.css), which every setTimeout below is keyed off of —
-      // the flip motion itself was fine as-is per direct follow-up
-      // request, only the rest period between flips (AUTO_MS) needed
-      // shortening, not the turn.
       const TURN_MS = reduceMotion ? 0 : 850;
       const HALF_MS = TURN_MS / 2;
-      // How long each page stays put before auto-advancing to the
-      // next — was 3200, shortened per direct request (the flip
-      // itself stays untouched; this is purely the dwell/rest time).
       const AUTO_MS = 1800;
-
+      let current = 0;
+      let animating = false;
       let autoTimer = null;
+
+      // Warm the next couple of spreads only, not the whole book up
+      // front — the Hamleys deck alone is 50 images.
+      const warmed = new Set();
+      function preload(it) {
+        if (!it) return;
+        [it.src, it.left, it.right].forEach((src) => {
+          if (!src || warmed.has(src)) return;
+          warmed.add(src);
+          const p = new Image();
+          p.src = src;
+        });
+      }
+
+      // side: 'left' | 'right'. Returns the half of item `it` for that
+      // side, or nothing when that side is empty (a cover's other half).
+      function paint(el, it, side) {
+        el.textContent = '';
+        // A cover only has one page, so its other side isn't shown at
+        // all (hidden, not an empty panel) — see setLayout for how the
+        // remaining page gets centred.
+        const empty = !it
+          || (it.kind === 'cover' && side === 'left')
+          || (it.kind === 'back' && side === 'right')
+          || (it.kind === 'pair' && !it[side]);
+        el.style.visibility = empty ? 'hidden' : '';
+        if (empty) return;
+        const img = document.createElement('img');
+        if (it.kind === 'pair') {
+          img.src = it[side];
+          img.alt = side === 'left' ? it.leftAlt : it.rightAlt;
+        } else {
+          img.src = it.src;
+          img.alt = side === 'left' || it.kind !== 'spread' ? it.alt : '';
+        }
+        img.draggable = false;
+        img.style.display = 'block';
+        img.style.maxWidth = 'none';
+        img.style.height = '100%';
+        if (it.kind === 'spread') {
+          img.style.width = '200%';
+          img.style.marginLeft = side === 'right' ? '-100%' : '0';
+        } else {
+          img.style.width = '100%';
+        }
+        el.appendChild(img);
+      }
+
+      function setLayout(it) {
+        book.classList.toggle('is-cover', !!it && it.kind === 'cover');
+        book.classList.toggle('is-back', !!it && it.kind === 'back');
+      }
+
+      function render() {
+        setLayout(items[current]);
+        paint(leftEl, items[current], 'left');
+        paint(leafEl, items[current], 'right');
+        paint(underEl, items[current + 1], 'right');
+        preload(items[current + 1]);
+        preload(items[current + 2]);
+        if (currentEl) currentEl.textContent = String(current + 1);
+        if (prevBtn) prevBtn.disabled = current <= 0;
+        if (nextBtn) nextBtn.disabled = current >= total - 1;
+      }
+      if (totalEl) totalEl.textContent = String(total);
+      render();
+
       function scheduleAuto() {
+        if (queued) {
+          const dir = queued;
+          queued = null;
+          if (dir === 'next') goNext();
+          else goPrev();
+          if (animating) return;
+        }
         if (reduceMotion) return;
         clearTimeout(autoTimer);
         autoTimer = setTimeout(() => {
-          if (current >= total - 1) {
-            resetToStart();
-          } else {
-            goNext();
-          }
+          if (current >= total - 1) resetToStart();
+          else goNext();
         }, AUTO_MS);
       }
 
       function resetToStart() {
         animating = true;
         const restart = () => {
-          pages.forEach((page, i) => {
-            page.style.transition = 'none';
-            page.style.transform = 'rotateY(0deg)';
-            page.style.zIndex = total - i;
-            // eslint-disable-next-line no-unused-expressions
-            page.offsetHeight; // force reflow so the next transition re-applies
-            page.style.transition = '';
-          });
-          setLeft(null);
           current = 0;
-          updateCount();
-          updateButtons();
-          if (stage) {
-            gsap.to(stage, {
-              opacity: 1,
-              duration: 0.4,
-              onComplete: () => {
-                animating = false;
-                scheduleAuto();
-              },
-            });
-          } else {
-            animating = false;
-            scheduleAuto();
-          }
+          render();
+          gsap.to(stage, {
+            opacity: 1,
+            duration: 0.4,
+            onComplete: () => {
+              animating = false;
+              scheduleAuto();
+            },
+          });
         };
-        if (stage) {
-          gsap.to(stage, { opacity: 0, duration: 0.4, onComplete: restart });
-        } else {
-          restart();
-        }
+        gsap.to(stage, { opacity: 0, duration: 0.4, onComplete: restart });
       }
 
       function goNext() {
         if (animating || current >= total - 1) return;
         animating = true;
-        const page = pages[current];
-        page.style.transform = 'rotateY(-180deg)';
-        updateButtons();
+        const next = items[current + 1];
+        leafEl.style.transform = 'rotateY(-180deg)';
+        setLayout(next);
+        setTimeout(() => paint(leftEl, next, 'left'), HALF_MS);
         setTimeout(() => {
-          setLeft(page);
-        }, HALF_MS);
-        setTimeout(() => {
-          page.style.transition = 'none';
-          page.style.transform = 'rotateY(0deg)';
-          page.style.zIndex = 0;
-          // eslint-disable-next-line no-unused-expressions
-          page.offsetHeight; // force reflow so the next transition re-applies
-          page.style.transition = '';
           current += 1;
-          updateCount();
+          leafEl.style.transition = 'none';
+          leafEl.style.transform = 'rotateY(0deg)';
+          render();
+          // eslint-disable-next-line no-unused-expressions
+          leafEl.offsetHeight; // force reflow so the next transition re-applies
+          leafEl.style.transition = '';
           animating = false;
           scheduleAuto();
         }, TURN_MS);
       }
 
+      // The reverse turn: the previous spread's right page swings back
+      // over the spine from the left (-180deg to 0) onto the current
+      // right page, which stays underneath until it's covered. The left
+      // side shows the previous spread's left page straight away — the
+      // page that's "lifting" off it is the leaf's hidden back face.
       function goPrev() {
         if (animating || current <= 0) return;
         animating = true;
-        const page = pages[current - 1];
-        page.style.transition = 'none';
-        page.style.zIndex = total + 1;
-        page.style.transform = 'rotateY(-180deg)';
+        const prev = items[current - 1];
+        setLayout(prev);
+        paint(leftEl, prev, 'left');
+        paint(underEl, items[current], 'right');
+        paint(leafEl, prev, 'right');
+        leafEl.style.transition = 'none';
+        leafEl.style.transform = 'rotateY(-180deg)';
         // eslint-disable-next-line no-unused-expressions
-        page.offsetHeight; // force reflow before re-enabling the transition
-        page.style.transition = '';
-        page.style.transform = 'rotateY(0deg)';
-        updateButtons();
-        setTimeout(() => {
-          setLeft(current - 2 >= 0 ? pages[current - 2] : null);
-        }, HALF_MS);
+        leafEl.offsetHeight; // force reflow before re-enabling the transition
+        leafEl.style.transition = '';
+        leafEl.style.transform = 'rotateY(0deg)';
         setTimeout(() => {
           current -= 1;
-          page.style.zIndex = total - current;
-          updateCount();
+          render();
           animating = false;
           scheduleAuto();
         }, TURN_MS);
       }
 
-      if (nextBtn) nextBtn.addEventListener('click', goNext);
-      if (prevBtn) prevBtn.addEventListener('click', goPrev);
+      // An arrow clicked mid-turn queues that one step instead of being
+      // dropped, so clicking quickly still moves the book along; any
+      // click also restarts the autoplay wait from scratch.
+      let queued = null;
+      const navigate = (dir) => {
+        clearTimeout(autoTimer);
+        if (animating) {
+          queued = dir;
+          return;
+        }
+        if (dir === 'next') goNext();
+        else goPrev();
+        if (!animating) scheduleAuto();
+      };
+      if (nextBtn) nextBtn.addEventListener('click', () => navigate('next'));
+      if (prevBtn) prevBtn.addEventListener('click', () => navigate('prev'));
       scheduleAuto();
     });
   }
@@ -2790,7 +2814,7 @@
     initCaseStudyReveals();
     initCaseNav();
     initCaseCycles();
-    initFlipbook();
+    initSpreadBook();
     initCustomCursor();
     initResizeRefresh();
   });
