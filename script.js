@@ -15,6 +15,64 @@
   // the two fighting over the scroll position each frame.
   let lenisInstance = null;
 
+  /* ---------------- Always open on the hero ----------------
+     Two things could land a fresh visit partway down the page:
+     the in-page nav links are plain anchors, so clicking "About Me"
+     left #about in the address bar — and that's the URL that got
+     copied and shared — and mobile browsers restore the last scroll
+     position on reopen/reload, which with the pinned sections often
+     meant somewhere around #about. A visit that arrives with a hash
+     from outside the site (shared link, bookmark, new tab) now drops
+     it and starts at the top; only a jump from another page of this
+     site (a case study's "About" / "Work" / "Contact" link) keeps its
+     target. #resume is left alone since it opens the resume modal. */
+  // Set through ScrollTrigger rather than on history directly:
+  // ScrollTrigger snapshots the value when it loads and writes that
+  // snapshot ("auto") back on every refresh, silently undoing a plain
+  // history.scrollRestoration = 'manual'.
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+    if (window.ScrollTrigger) ScrollTrigger.clearScrollMemory('manual');
+  }
+  const KEEP_HASHES = ['#resume'];
+  const fromThisSite = (() => {
+    try {
+      return !!document.referrer && new URL(document.referrer).origin === location.origin;
+    } catch (e) {
+      return false;
+    }
+  })();
+  const cleanUrl = () => history.replaceState(null, '', location.pathname + location.search);
+  const startAtTop = !location.hash || (!fromThisSite && !KEEP_HASHES.includes(location.hash));
+  if (location.hash && startAtTop) cleanUrl();
+  const jumpTo = (y) => {
+    window.scrollTo(0, y);
+    if (lenisInstance) lenisInstance.scrollTo(y, { immediate: true });
+  };
+  if (startAtTop) {
+    window.scrollTo(0, 0);
+    window.addEventListener('load', () => jumpTo(0));
+  } else if (!KEEP_HASHES.includes(location.hash)) {
+    // A cross-page jump (e.g. index.html#about): the browser's own
+    // fragment scroll fires before the pinned sections have built
+    // their spacers, and overshoots by thousands of px. Once
+    // everything has loaded, re-measure the target against the final
+    // layout and land there instead, then drop the hash so the URL
+    // left behind is the plain homepage.
+    const hash = location.hash;
+    window.addEventListener('load', () => {
+      let target = null;
+      try { target = document.querySelector(hash); } catch (e) { /* not a valid selector */ }
+      if (target) jumpTo(Math.max(0, Math.round(target.getBoundingClientRect().top + window.scrollY)));
+      cleanUrl();
+    });
+  }
+  // Keep the address bar clean after in-page jumps too, so the URL
+  // someone copies is always the plain homepage.
+  window.addEventListener('hashchange', () => {
+    if (location.hash && !KEEP_HASHES.includes(location.hash)) cleanUrl();
+  });
+
   gsap.registerPlugin(...[window.ScrollTrigger, window.SplitText].filter(Boolean));
 
   /* ---------------- Header theme swap (glass navbar over dark marquee) ----------------
