@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=255">
+<link rel="stylesheet" href="styles.css?v=273">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -62,17 +62,25 @@
         Back
       </a>
       <h1 class="case2-title">The Big Bang Theory</h1>
-      <p class="case2-meta">Interactive Book | Editorial Design</p>
-
-      <div class="case2-shots case2-shots--wide">
-        <figure class="case2-shot case2-shot--video"><video controls playsinline preload="metadata" src="assets/tousebigbang/0.mp4" aria-label="The final video documentation of The Big Bang Theory interactive book"></video></figure>
-      </div>
-      <p class="case2-shot__caption">The final video documentation</p>
+      <p class="case2-meta">College Project | Editorial Design</p>
 
       <div class="case2-section">
         <h2 class="case2-section__heading">The Brief</h2>
         <p>The brief was to create an interactive book around any chosen topic, using interaction, visual storytelling, and engaging page experiences to make the subject more than just something to&nbsp;read.</p>
       </div>
+
+      <div class="case2-shots case2-shots--wide">
+        <figure class="case2-shot case2-shot--video">
+          <video controls playsinline preload="metadata" src="assets/tousebigbang/0.mp4" aria-label="The final video documentation of The Big Bang Theory interactive book"></video>
+          <!-- Centered play/pause (script.js initCaseVideos) — the native
+               controls keep the seek bar, time and volume. -->
+          <button class="case2-video-play" type="button" aria-label="Play video">
+            <svg class="case2-video-play__icon case2-video-play__icon--play" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 5.5v13a1 1 0 0 0 1.53.848l10.4-6.5a1 1 0 0 0 0-1.696l-10.4-6.5A1 1 0 0 0 7 5.5Z" fill="currentColor"/></svg>
+            <svg class="case2-video-play__icon case2-video-play__icon--pause" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+          </button>
+        </figure>
+      </div>
+      <p class="case2-shot__caption">The final video documentation</p>
 
       <div class="case2-section">
         <h2 class="case2-section__heading">The Idea</h2>
@@ -104,14 +112,14 @@
         <p>I began with layout ideation, sketching different page structures and interactive mechanisms based on each character and chapter. I then explored multiple cover directions and visual treatments before finalising the comic-inspired identity. The book went through draft printing and physical testing, allowing me to check scale, placement, folds, and interactions. Finally, I refined the layouts, produced the final prints and pasting, and assembled the interactive elements, including cut-outs, stickers, and layered components, into the finished&nbsp;book.</p>
       </div>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/5.jpg" alt="Layout iterations sketching different page structures and interactive mechanisms." loading="lazy"></figure>
+        <figure class="case2-shot"><img src="assets/tousebigbang/5.jpg?v=2" alt="Layout iterations sketching different page structures and interactive mechanisms." loading="lazy"></figure>
       </div>
       <p class="case2-shot__caption">Layout Iterations</p>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/6.jpg" alt="Printing the book's pages during draft and final production." loading="lazy"></figure>
+        <figure class="case2-shot"><img src="assets/tousebigbang/6.jpg?v=2" alt="The book's printed character stickers laid out across a red spread." loading="lazy"></figure>
       </div>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/7.jpg" alt="Pasting and assembling the printed pages into the finished book." loading="lazy"></figure>
+        <figure class="case2-shot"><img src="assets/tousebigbang/7.jpg?v=2" alt="Pasting and assembling the printed pages into the finished book." loading="lazy"></figure>
       </div>
       <p class="case2-shot__caption">Printing and Pasting</p>
 
@@ -177,7 +185,7 @@
       </div>
 
       <div class="case2-next">
-        <a class="case2-next__link" href="editorial.html"><svg class="case2-next__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 L8 12 L15 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Previous</a>
+        <a class="case2-next__link" href="motion.html"><svg class="case2-next__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 L8 12 L15 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Previous</a>
         <a class="case2-next__link" href="index.html#projects">Explore More Work <svg class="case2-next__arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5 L16 12 L9 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       </div>
     </div>
@@ -276,6 +284,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=255"></script>
+<script src="script.js?v=273"></script>
 </body>
 </html>

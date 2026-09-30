@@ -63,10 +63,24 @@
     window.addEventListener('load', () => {
       let target = null;
       try { target = document.querySelector(hash); } catch (e) { /* not a valid selector */ }
-      if (target) jumpTo(Math.max(0, Math.round(target.getBoundingClientRect().top + window.scrollY)));
+      // #top is the hero, which is fixed in place (its rect always
+      // reads 0) — measuring it would just return the current scroll.
+      if (hash === '#top') jumpTo(0);
+      else if (target) jumpTo(Math.max(0, Math.round(target.getBoundingClientRect().top + window.scrollY)));
       cleanUrl();
     });
   }
+
+  // "Home" / logo links (href="#top") — the hero is fixed in place, so
+  // the browser considers #top already on screen wherever you are and
+  // a plain anchor jump never moves. Scroll to the very top instead.
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest && event.target.closest('a[href="#top"]');
+    if (!link) return;
+    event.preventDefault();
+    if (lenisInstance) lenisInstance.scrollTo(0);
+    else window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  });
   // Keep the address bar clean after in-page jumps too, so the URL
   // someone copies is always the plain homepage.
   window.addEventListener('hashchange', () => {
@@ -809,7 +823,7 @@
       // which drifted out of step with the chip's simultaneous 0.7s
       // crossfade.
       if (frames.length >= 2 && !prefersReducedMotion()) {
-        const CYCLE_MS = 2600;
+        const CYCLE_MS = 2000;
         let activeIndex = frames.findIndex((el) => el.classList.contains('is-active'));
         if (activeIndex < 0) activeIndex = 0;
         setInterval(() => {
@@ -820,6 +834,31 @@
           if (labelFrames[activeIndex]) labelFrames[activeIndex].classList.add('is-active');
         }, CYCLE_MS);
       }
+    });
+  }
+
+  /* ---------------- Case study video play button ----------------
+     A centered play/pause over .case2-shot--video, replacing the
+     native controls' bottom-left one (hidden in styles.css). State
+     follows the video's own play/pause/ended events rather than the
+     button's clicks, so it stays right however playback is toggled —
+     clicking the video itself, the keyboard, or the end of the clip. */
+  function initCaseVideos() {
+    document.querySelectorAll('.case2-shot--video').forEach((figure) => {
+      const video = figure.querySelector('video');
+      const button = figure.querySelector('.case2-video-play');
+      if (!video || !button) return;
+      const sync = () => {
+        const playing = !video.paused && !video.ended;
+        figure.classList.toggle('is-playing', playing);
+        button.setAttribute('aria-label', playing ? 'Pause video' : 'Play video');
+      };
+      button.addEventListener('click', () => {
+        if (video.paused || video.ended) video.play().catch(() => {});
+        else video.pause();
+      });
+      ['play', 'pause', 'ended'].forEach((type) => video.addEventListener(type, sync));
+      sync();
     });
   }
 
@@ -963,7 +1002,9 @@
         preload(items[current + 2]);
         if (currentEl) currentEl.textContent = String(current + 1);
         if (prevBtn) prevBtn.disabled = current <= 0;
-        if (nextBtn) nextBtn.disabled = current >= total - 1;
+        // Never disabled: on the last spread it takes the book back to
+        // the cover (see advance()), the same thing autoplay does there.
+        if (nextBtn) nextBtn.setAttribute('aria-label', current >= total - 1 ? 'Back to first page' : 'Next page');
       }
       if (totalEl) totalEl.textContent = String(total);
       render();
@@ -972,16 +1013,19 @@
         if (queued) {
           const dir = queued;
           queued = null;
-          if (dir === 'next') goNext();
+          if (dir === 'next') advance();
           else goPrev();
           if (animating) return;
         }
         if (reduceMotion) return;
         clearTimeout(autoTimer);
-        autoTimer = setTimeout(() => {
-          if (current >= total - 1) resetToStart();
-          else goNext();
-        }, AUTO_MS);
+        autoTimer = setTimeout(advance, AUTO_MS);
+      }
+
+      // Forward one spread, or — from the last one — back to the cover.
+      function advance() {
+        if (current >= total - 1) resetToStart();
+        else goNext();
       }
 
       function resetToStart() {
@@ -1058,7 +1102,7 @@
           queued = dir;
           return;
         }
-        if (dir === 'next') goNext();
+        if (dir === 'next') advance();
         else goPrev();
         if (!animating) scheduleAuto();
       };
@@ -1187,13 +1231,12 @@
     let maxLeft = 0;
     let maxRight = 0;
     cards.forEach((card) => {
-      const textNode = [...card.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+      // The whole label, every line — measuring only the first text
+      // node missed the second line of two-line labels ("6+" was
+      // measured, "Internships" under the <br> wasn't), so a long
+      // second line could tuck under the photo.
       const range = document.createRange();
-      if (textNode) {
-        range.selectNodeContents(textNode);
-      } else {
-        range.selectNodeContents(card);
-      }
+      range.selectNodeContents(card);
       const textRect = range.getBoundingClientRect();
       if (isLeftCard(card)) {
         const overlap = textRect.right - portraitRect.left;
@@ -1306,7 +1349,8 @@
 
     let fadeRange = 220;
     let focusY = 0;
-    let trackHeight = 0;
+    let startY = 0; // track translateY at progress 0 — see measure()
+    let travel = 0; // px the track moves over the whole pin — see measure()
     let cache = []; // { el, center } — center is this block's vertical midpoint, track-relative, measured once
 
     function measure() {
@@ -1321,21 +1365,32 @@
       const prevTransform = track.style.transform;
       track.style.transform = 'none';
       const trackRect = track.getBoundingClientRect();
-      trackHeight = trackRect.height;
       cache = blocks.map((el) => {
         const r = el.getBoundingClientRect();
         return { el, center: r.top - trackRect.top + r.height / 2 };
       });
+      // Stop once the LAST block's center reaches the focus line —
+      // i.e. while it's still fully lit — rather than carrying on until
+      // it has scrolled up and faded out of the column. That tail used
+      // to leave a stretch of pinned scroll with an empty text column
+      // beside the photo (per direct report); now the pin releases on
+      // the final passage and it simply scrolls away with the page.
+      // The same goes for the lead-in: the first block used to start a
+      // full fadeRange below the focus line — a dim sliver at the very
+      // bottom of the column — so the pin opened on an empty-looking
+      // column too. It now starts just at the edge of the readable
+      // plateau (FOCUS_RANGE below the focus line), already lit.
+      startY = focusY + FOCUS_RANGE - cache[0].center;
+      travel = startY - (focusY - cache[cache.length - 1].center);
       track.style.transform = prevTransform;
     }
     measure();
 
     function render(progress) {
-      // track's top starts FADE_RANGE below the focus line (so even
-      // the very first block begins dim, not already lit) and ends
-      // FADE_RANGE above it once the last block has cleared — see the
-      // long comment above for the lead-in/lead-out derivation.
-      const trackY = focusY + fadeRange - progress * (trackHeight + fadeRange * 2);
+      // track starts with the first block already on the readable
+      // plateau and ends with the last block centered on the focus
+      // line (see startY/travel in measure()).
+      const trackY = startY - progress * travel;
       track.style.transform = `translateY(${trackY}px)`;
 
       for (let i = 0; i < cache.length; i++) {
@@ -1371,12 +1426,14 @@
       // already-fully-faded-out text column next to the still-static
       // photo — a stretch of visible empty space on the text side,
       // per direct report. Tying end to that same real pixel figure
-      // (a function, so it re-reads current trackHeight/fadeRange on
+      // (a function, so it re-reads the current measurement on
       // every ScrollTrigger refresh rather than freezing whatever
       // they were at creation) means the pin releases into the next
       // section the instant there's nothing left to show — no
       // leftover dead scroll, by construction, at any viewport size.
-      end: () => '+=' + (trackHeight + fadeRange * 2),
+      // (Since shortened further to `travel` — the pin now ends with
+      // the last block still in focus, not after it has faded out.)
+      end: () => '+=' + travel,
       scrub: 1,
       pin: true,
       anticipatePin: 1,
@@ -1852,10 +1909,19 @@
       trigger: startEl,
       start: 'center center',
       end: () => (philTrigger ? philTrigger.start : '+=2000'),
+      // Also repaint from this trigger's own progress change — the
+      // page-wide trigger below can't be relied on alone for a single
+      // big jump UPWARD (e.g. the footer's "About" link): ScrollTrigger
+      // updates triggers in reverse order when scrolling up, so that
+      // one fires BEFORE this one has refreshed its progress and paints
+      // the card with the stale "already landed" value (hidden, parked
+      // over the philosophy section). With no further scroll event to
+      // correct it, #about showed no photo at all, per direct report.
+      onUpdate: (self) => updateCard(self.progress),
     });
     updateCard(flightTrigger.progress);
 
-    // flightTrigger's own onUpdate (not used above) only fires when
+    // flightTrigger's own onUpdate (above) only fires when
     // ITS progress numerically changes — which it doesn't for any
     // scroll that stays entirely before the flight starts or entirely
     // after it ends, since GSAP clamps and reports the same 0 or 1
@@ -2872,6 +2938,7 @@
     initCaseStudyReveals();
     initCaseNav();
     initCaseCycles();
+    initCaseVideos();
     initSpreadBook();
     initCustomCursor();
     initResizeRefresh();

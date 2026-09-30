@@ -523,7 +523,9 @@ body:has(.case2) .footer {
      (Adobe's tracking unit is 1/1000 em) */
   font-weight: 500;
   font-size: var(--fs-headline);
-  line-height: 1.161;
+  /* was 1.161 (the spec's 65/56) — tightened slightly per direct
+     request */
+  line-height: 1.08;
   letter-spacing: -0.032em;
   font-kerning: auto;
   text-wrap: balance;
@@ -539,6 +541,9 @@ body:has(.case2) .footer {
    text-brandPink in the reference files */
 .hero__headline-accent {
   color: var(--color-pink);
+  /* real Poppins Medium Italic (ital 1,500 in index.html's font link),
+     not a synthesized slant */
+  font-style: italic;
 }
 
 /* ---------------------------------------------------------------
@@ -1520,13 +1525,28 @@ body:has(.case2) .footer {
   max-width: var(--content-max);
   margin-inline: auto;
   padding-inline: var(--container-pad);
+  /* The heading→photo gap was tightened (.about-heading's margin and
+     .stats-cluster's min-height below), but the section itself should
+     keep its original overall height, per direct request. This is
+     exactly the height those two changes removed — (old cluster
+     min-height − portrait height) + (old heading margin − new) —
+     handed back half above the heading and half below the photo, so
+     the heading+photo group stays centered in the same-sized band. */
+  --about-reclaim: max(0px, calc(
+    clamp(380px, 50vw, 580px) - clamp(190px, 46vw, 320px) * 1.25
+    + clamp(3.5rem, 9vw, 6.5rem) - clamp(2rem, 4vw, 3rem)
+  ));
+  padding-block: calc(var(--about-reclaim) / 2);
 }
 .about-heading {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(2.5rem, 4.2vw + 1.2rem, calc(var(--fs-scale-h2) * 1.3));
   letter-spacing: -0.02em;
-  margin-bottom: clamp(3.5rem, 9vw, 6.5rem);
+  /* was clamp(3.5rem, 9vw, 6.5rem) — on top of .stats-cluster's own
+     extra height (see its min-height) that left ~190px of empty cream
+     between the heading and the portrait, per direct report. */
+  margin-bottom: clamp(2rem, 4vw, 3rem);
 }
 .about-heading__accent {
   color: var(--color-why);
@@ -1544,7 +1564,12 @@ body:has(.case2) .footer {
      room before the doodles start feeling crowded */
   max-width: 56rem;
   margin-inline: auto;
-  min-height: clamp(380px, 50vw, 580px);
+  /* was clamp(380px, 50vw, 580px) — up to 180px taller than the 4:5
+     portrait it centers, which added ~90px of dead space above (and
+     below) the photo. The stat cards only ever sit within the photo's
+     own height (top:50% ± --stat-offset-y), so the portrait's own
+     height is all this needs. */
+  min-height: calc(var(--portrait-width) * 1.25);
   /* .portrait-placeholder's own width, hoisted to a shared variable —
      see the long comment on --stat-offset-x/y below for why the stat
      cards need to read this same number rather than each side tuning
@@ -1702,8 +1727,11 @@ body:has(.case2) .footer {
   padding-inline: clamp(0.45rem, 1.9vw, 0.85rem);
 }
 /* "3+ Years" only, per direct request — box size/position untouched,
-   just a bigger font-size than "30+ Projects" (--4) now. */
-.stat-card--3 {
+   just a bigger font-size than "30+ Projects" (--4) now. "3+ Years"
+   moved from the top-right card (--3) to the top-left (--1) so
+   experience reads first, and its size moved with it; "35+ Brands &
+   Clients" (now --3) is back on the shared .stat-card size. */
+.stat-card--1 {
   /* was clamp(1.4rem, 5.6vw, 3.1rem) — measured with canvas
      ctx.measureText against the real rendered font: at the 3.1rem
      cap "3+ Years" needed ~218px but only had ~216px of available
@@ -2097,6 +2125,12 @@ body:has(.case2) .footer {
   letter-spacing: -0.02em;
   margin-bottom: 1.5rem;
 }
+/* the "The" right before each heading's accent word ("The World",
+   "The Process", "The Impact"), lighter than the rest per direct
+   request — everything else stays at the heading's 800 */
+.philosophy-copy__heading-lead {
+  font-weight: 500;
+}
 .philosophy-copy__heading-accent {
   color: var(--color-ink);
 }
@@ -2312,7 +2346,8 @@ body:has(.case2) .footer {
 }
 .testimonial-card {
   flex: 0 0 clamp(64px, 6vw, 90px);
-  background: var(--color-why);
+  /* was var(--color-why) (orange) — brand pink per direct request */
+  background: var(--color-pink);
   border-radius: 1.5rem;
   overflow: hidden;
   cursor: pointer;
@@ -2370,7 +2405,13 @@ body:has(.case2) .footer {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  background: var(--color-ink);
+  /* Generic profile silhouette in the cream on-ink color — no client
+     photos, and a bare dark disc read as a missing image. The
+     shoulders run past the bottom of the viewBox so the avatar's own
+     round edge (border-radius + overflow) crops them, instead of the
+     body ending in a flat cut inside the circle. */
+  background: var(--color-ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='15' r='7' fill='%23FAF5EC'/%3E%3Cpath d='M4 44C4 32 11 25.5 20 25.5S36 32 36 44Z' fill='%23FAF5EC'/%3E%3C/svg%3E") center / 100% no-repeat;
+  overflow: hidden;
   flex-shrink: 0;
 }
 .testimonial-card__meta {
@@ -2508,6 +2549,18 @@ body:has(.case2) .footer {
 }
 .contact-form__input--select:valid {
   color: var(--color-on-ink);
+}
+/* The open list inherits the field's light cream text, but Windows
+   (and Linux) draw that list on a white system background, leaving
+   the country names white-on-white. Give the options their own dark
+   surface so they read the same as the field itself. (macOS draws its
+   own native menu and ignores this, which is fine there.) */
+.contact-form__input--select option {
+  background-color: var(--color-ink);
+  color: var(--color-on-ink);
+}
+.contact-form__input--select option[disabled] {
+  color: rgba(250, 245, 236, 0.55);
 }
 /* Honeypot wrapper (see the comment on it in Index.html). Deliberately
    NOT display:none or visibility:hidden — the better-built bots skip
@@ -3570,6 +3623,15 @@ body.resume-open {
      rest of the hero (back link, meta, pills) stays left-aligned in */
   text-align: center;
 }
+/* The 4.5rem floor above is wider than a phone can fit for the longer
+   title words ("REPACKAGING" ran ~500px in a ~330px column and pushed
+   the whole page into sideways scroll). Scale with the viewport
+   instead on narrow screens. */
+@media (max-width: 600px) {
+  .case2-title {
+    font-size: clamp(2.25rem, 12vw, 4.5rem);
+  }
+}
 /* BGL only — a one-line tagline under the title, above the existing
    brief-number meta line, per direct request for the page's updated
    copy. */
@@ -4207,11 +4269,62 @@ body.resume-open {
    its flipbook uses square pages (612x612 source PDF) instead of the
    Hamleys deck's 3:2 slides, so the two-page stage is 2:1, not
    1422:475. */
+.case2-shot--video {
+  position: relative;
+}
 .case2-shot--video video {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
+}
+/* The native controls' own play button sits bottom-left — hidden in
+   favour of the centered one below (Chrome/Safari/Edge; Firefox has no
+   hook for this and keeps its own alongside). The overlay variant is
+   Chrome's big mobile play button, which would stack on top of ours. */
+.case2-shot--video video::-webkit-media-controls-play-button,
+.case2-shot--video video::-webkit-media-controls-overlay-play-button {
+  display: none;
+}
+/* Same cream disc as the homepage TV's play button, scaled up for a
+   full-width video. Visible while paused; fades out during playback
+   and comes back on hover/focus so it never sits over the footage. */
+.case2-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(56px, 8vw, 84px);
+  height: clamp(56px, 8vw, 84px);
+  border-radius: 50%;
+  border: none;
+  background: var(--color-on-ink);
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.3s ease, transform 0.2s ease, background 0.2s ease;
+}
+.case2-video-play:hover,
+.case2-video-play:focus-visible {
+  transform: translate(-50%, -50%) scale(1.08);
+  background: var(--color-cream);
+}
+.case2-video-play__icon {
+  width: 42%;
+  height: 42%;
+}
+.case2-video-play__icon--pause { display: none; }
+.case2-shot--video.is-playing .case2-video-play__icon--play { display: none; }
+.case2-shot--video.is-playing .case2-video-play__icon--pause { display: block; }
+.case2-shot--video.is-playing .case2-video-play {
+  opacity: 0;
+}
+.case2-shot--video.is-playing:hover .case2-video-play,
+.case2-shot--video.is-playing .case2-video-play:focus-visible {
+  opacity: 1;
 }
 .flipbook--square {
   max-width: 900px;
