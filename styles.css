@@ -2772,14 +2772,14 @@ body:has(.case2) .footer {
   line-height: 0.8;
   letter-spacing: -0.02em;
   white-space: nowrap;
-  /* was #FCF3EA (near-cream), which read as a bold watermark
-     against this section's old near-black. On the light pink it
-     had almost no contrast left and the wordmark faded to a
-     ghost, so it flips to ink like the rest of the section's
-     text. Safe to change the base rule rather than scope it:
-     this marquee exists only on Index.html, never in the
-     case-study footers. */
-  color: var(--color-ink);
+  /* Per direct request. Started as #FCF3EA (near-cream), which worked
+     as a bold watermark while this section was near-black but faded
+     to a ghost once it turned pink; was briefly ink, and is now the
+     palette's dark pink, which keeps it legible against the blush
+     without the heaviness of near-black at this size. Safe as a base
+     rule rather than a scoped one: this marquee exists only on
+     Index.html, never in the case-study footers. */
+  color: var(--color-pink);
 }
 
 /* ---------------------------------------------------------------
@@ -3840,6 +3840,13 @@ body.resume-open {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(1.75rem, 1.8vw + 1.3rem, 2.6rem);
+  /* Per direct request. Previously inherited .case2's body colour -
+     cream while these pages were near-black, ink once they turned
+     beige - so the section headings never read as their own thing.
+     --color-pink is the palette's existing dark pink (the hero
+     accent, the form borders), not a new swatch, and at this weight
+     and size it clears the contrast bar for large text on cream. */
+  color: var(--color-pink);
   /* was 0.85rem — per direct request, tightened the gap to the body
      copy right under it */
   margin-bottom: 0.4rem;
