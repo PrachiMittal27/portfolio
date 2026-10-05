@@ -11,8 +11,8 @@
   --color-pink: #DC346E; /* client's exact color-picker value (R220 G52 B110) */
   --color-on-ink: #FAF5EC;
   --color-on-ink-soft: rgba(250, 245, 236, 0.7); /* muted body copy on dark sections (case2-*) — same on-ink white, dimmed instead of a separate hardcoded gray */
-  --color-case2-bg: #1A1A1A; /* client-supplied swatch, per direct request — a neutral near-black, distinct from --color-ink's warm brown-black, scoped to the case2 (detailed project) template only */
-  --color-case2-text: var(--color-cream); /* was a separate #EBE5DC swatch, now updated to a second client-supplied swatch that reads as the same value as --color-cream — reusing that existing token instead of a near-duplicate hex. Case2's own body/heading text color (the orange pill and "Next Project" button keep their own dark text for contrast against orange, not this). */
+  --color-case2-bg: var(--color-cream); /* was #1A1A1A, a client-supplied near-black; per direct request the detailed-project pages are now an off-white beige. Points at the existing --color-cream rather than a new hex, because that is already this site's off-white (hero, About, Testimonials) - one fewer near-duplicate swatch to keep in sync. */
+  --color-case2-text: var(--color-ink); /* flipped together with --color-case2-bg above: was --color-cream, for text on near-black; now the body ink, for text on beige. Everything that reads this token (.case2, .case2-back, .case2-meta, .case2-section p, .case2-shot__caption) inverts with it. The orange pills and the Next button keep their own cream text, which stays correct against orange on any ground. */
 
   --font-display: "Poppins", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -274,13 +274,9 @@ a { color: inherit; }
    here instead, per direct request, reusing the identical color
    (var(--color-on-ink), the site's cream/beige-on-dark text tone) so
    the navbar itself is otherwise unchanged from the homepage. */
-body:has(.case2) .site-header__inner {
-  background: rgba(33, 26, 20, 0.55);
-}
-body:has(.case2) .logo,
-body:has(.case2) .nav-link {
-  color: var(--color-on-ink);
-}
+/* The dark header override that used to live here is deliberately gone
+   rather than restated: these pages are beige now, which is exactly
+   what .site-header__inner's own default light glass was built for. */
 
 /* .case2's own dark background only covers the <article> itself —
    the .footer directly after it sits back on body's plain cream,
@@ -1217,8 +1213,19 @@ body:has(.case2) .footer {
   position: relative;
   z-index: 0;
   overflow: hidden;
-  background: var(--color-ink);
-  color: var(--color-on-ink);
+  /* was --color-ink (near-black) with --color-on-ink text; per direct
+     request this is now the same light pink as the WHY section. The
+     two properties have to move together: nothing inside this section
+     sets its own text colour - the cycling category labels and the
+     thumbnail captions all inherit from here - so changing only the
+     background would leave cream text on pink. Two things downstream
+     track this colour and were changed with it: the fill of
+     .curve--testimonials-top (a curve is painted to match the section
+     ABOVE it, which is this one) and the projects/testimonials entries
+     in initSectionColorTransitions (script.js), which scrub each
+     section from its predecessor's colour. */
+  background: var(--color-blush);
+  color: var(--color-ink);
   /* was clamp(4rem, 9vw, 6.5rem) — per direct request, more breathing
      room between the top wave and the heading/chip row right under it */
   padding-top: clamp(6rem, 13vw, 10rem);
@@ -2291,7 +2298,9 @@ body:has(.case2) .footer {
   display: block;
 }
 .curve--testimonials-top path {
-  fill: var(--color-ink);
+  /* flat match to the section right before this one, which is now
+     .projects-section's blush rather than its old ink */
+  fill: var(--color-blush);
 }
 .testimonials-section__inner {
   max-width: var(--content-max);
@@ -2467,8 +2476,13 @@ body:has(.case2) .footer {
   position: relative;
   z-index: 0;
   overflow: hidden;
-  background: var(--color-ink);
-  color: var(--color-on-ink);
+  /* was --color-ink with --color-on-ink text; per direct request now
+     the same light pink as the WHY and Projects sections. Everything
+     inside that assumed a dark ground had to flip with it: the
+     subhead, the form inputs/placeholders/options, the status line,
+     and - scoped separately below - the footer. */
+  background: var(--color-blush);
+  color: var(--color-ink);
   padding-block: clamp(4rem, 9vw, 7rem);
 }
 .curve--contact-top {
@@ -2500,7 +2514,7 @@ body:has(.case2) .footer {
 }
 .contact-subhead {
   font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(33, 26, 20, 0.72);
   margin-top: 1rem;
 }
 
@@ -2522,16 +2536,19 @@ body:has(.case2) .footer {
 }
 .contact-form__input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
+  /* was a 5% white film, which only reads as a field on a dark
+     ground; on pink it needs to be lighter than its surroundings
+     instead of darker */
+  background: rgba(255, 255, 255, 0.55);
   border: 1.5px solid var(--color-pink);
   border-radius: 999px;
-  color: var(--color-on-ink);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 0.95rem;
   padding: 0.85rem 1.4rem;
 }
 .contact-form__input::placeholder {
-  color: rgba(250, 245, 236, 0.55);
+  color: rgba(33, 26, 20, 0.5);
 }
 .contact-form__input:focus-visible {
   outline: 2px solid var(--color-pink);
@@ -2540,7 +2557,7 @@ body:has(.case2) .footer {
 .contact-form__input--select {
   appearance: none;
   -webkit-appearance: none;
-  color: rgba(250, 245, 236, 0.55);
+  color: rgba(33, 26, 20, 0.5);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23DC346E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1.2rem center;
@@ -2548,7 +2565,7 @@ body:has(.case2) .footer {
   padding-right: 2.75rem;
 }
 .contact-form__input--select:valid {
-  color: var(--color-on-ink);
+  color: var(--color-ink);
 }
 /* The open list inherits the field's light cream text, but Windows
    (and Linux) draw that list on a white system background, leaving
@@ -2556,11 +2573,11 @@ body:has(.case2) .footer {
    surface so they read the same as the field itself. (macOS draws its
    own native menu and ignores this, which is fine there.) */
 .contact-form__input--select option {
-  background-color: var(--color-ink);
-  color: var(--color-on-ink);
+  background-color: var(--color-cream);
+  color: var(--color-ink);
 }
 .contact-form__input--select option[disabled] {
-  color: rgba(250, 245, 236, 0.55);
+  color: rgba(33, 26, 20, 0.5);
 }
 /* Honeypot wrapper (see the comment on it in Index.html). Deliberately
    NOT display:none or visibility:hidden — the better-built bots skip
@@ -2590,7 +2607,7 @@ body:has(.case2) .footer {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--color-on-ink);
+  color: var(--color-ink);
   text-align: center;
   max-width: 34rem;
 }
@@ -2648,14 +2665,14 @@ body:has(.case2) .footer {
   justify-content: space-between;
   gap: 2.5rem;
   padding-bottom: clamp(2rem, 5vw, 3rem);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(33, 26, 20, 0.15);
 }
 .footer__info {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(33, 26, 20, 0.7);
 }
 /* The one link in this block, and the only one on the site that sits
    mid-sentence inside a run of plain text rather than in a list of
@@ -2690,11 +2707,11 @@ body:has(.case2) .footer {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(33, 26, 20, 0.5);
   margin-bottom: 0.2rem;
 }
 .footer__col a {
-  color: var(--color-on-ink);
+  color: var(--color-ink);
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 200ms ease;
@@ -2706,8 +2723,13 @@ body:has(.case2) .footer {
 .footer__copyright {
   margin-top: clamp(1.5rem, 4vw, 2rem);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(33, 26, 20, 0.5);
 }
+/* The footer's own colours are dark-on-light above, because every
+   ground it now sits on is light: the contact section's pink on
+   Index.html, and the beige case-study pages. The scoped
+   .contact-section overrides that used to sit here existed only while
+   those two grounds disagreed, and are gone now that they don't. */
 .footer__wordmark {
   /* true full-bleed, not just "cancel .footer's own padding" — the
      old negative-margin approach (matching .contact-section's own
@@ -2750,7 +2772,14 @@ body:has(.case2) .footer {
   line-height: 0.8;
   letter-spacing: -0.02em;
   white-space: nowrap;
-  color: #FCF3EA;
+  /* was #FCF3EA (near-cream), which read as a bold watermark
+     against this section's old near-black. On the light pink it
+     had almost no contrast left and the wordmark faded to a
+     ghost, so it flips to ink like the rest of the section's
+     text. Safe to change the base rule rather than scope it:
+     this marquee exists only on Index.html, never in the
+     case-study footers. */
+  color: var(--color-ink);
 }
 
 /* ---------------------------------------------------------------
@@ -3637,7 +3666,7 @@ body.resume-open {
    copy. */
 .case2-tagline {
   margin-top: clamp(0.75rem, 1.8vw, 1.1rem);
-  color: var(--color-on-ink);
+  color: var(--color-ink);
   font-weight: 600;
   font-size: clamp(1.2rem, 0.7vw + 1.05rem, 1.45rem);
   text-align: center;
@@ -4251,7 +4280,7 @@ body.resume-open {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.05rem;
-  color: var(--color-on-ink);
+  color: var(--color-ink);
   min-width: 3.5rem;
   text-align: center;
 }

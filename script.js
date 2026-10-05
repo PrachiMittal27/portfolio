@@ -2075,9 +2075,9 @@
       // background as its own static CSS color (already the same
       // --color-pink the curve uses) removes the redundant, briefly-
       // out-of-sync second transition entirely.
-      { sel: '.projects-section', from: pink, to: ink },
-      { sel: '.testimonials-section', from: ink, to: cream },
-      { sel: '.contact-section', from: cream, to: ink },
+      { sel: '.projects-section', from: pink, to: blush },
+      { sel: '.testimonials-section', from: blush, to: cream },
+      { sel: '.contact-section', from: cream, to: blush },
     ];
 
     chain.forEach(({ sel, from, to, start, end, scrub }) => {
