@@ -3646,6 +3646,12 @@ body.resume-open {
      kept growing per direct request each time — this pulls back down
      a step per a follow-up request to reduce it again. */
   font-size: clamp(4.5rem, 6.5vw + 2.5rem, 9rem);
+  /* Per direct request: the project name is the one thing on these
+     pages in the palette's dark pink. The section headings under it
+     (The Brief, The Process...) deliberately stay the body ink, so
+     the title reads as the single accent rather than competing with
+     a page full of pink. */
+  color: var(--color-pink);
   letter-spacing: -0.02em;
   line-height: 1.02;
   /* per direct request — the title centers within the same column the
@@ -3840,13 +3846,6 @@ body.resume-open {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(1.75rem, 1.8vw + 1.3rem, 2.6rem);
-  /* Per direct request. Previously inherited .case2's body colour -
-     cream while these pages were near-black, ink once they turned
-     beige - so the section headings never read as their own thing.
-     --color-pink is the palette's existing dark pink (the hero
-     accent, the form borders), not a new swatch, and at this weight
-     and size it clears the contrast bar for large text on cream. */
-  color: var(--color-pink);
   /* was 0.85rem — per direct request, tightened the gap to the body
      copy right under it */
   margin-bottom: 0.4rem;
