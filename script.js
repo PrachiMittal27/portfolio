@@ -837,28 +837,54 @@
     });
   }
 
-  /* ---------------- Case study video play button ----------------
-     A centered play/pause over .case2-shot--video, replacing the
-     native controls' bottom-left one (hidden in styles.css). State
-     follows the video's own play/pause/ended events rather than the
-     button's clicks, so it stays right however playback is toggled —
-     clicking the video itself, the keyboard, or the end of the clip. */
+  /* ---------------- Case study video controls ----------------
+     Skip and playback-speed buttons over .case2-shot--video. Play/pause is
+     deliberately the browser's own: a custom centred disc used to sit here,
+     with the native play button hidden in styles.css to make room for it,
+     but that was a second control doing a job the native strip already
+     does. Both it and the rule hiding the native button are gone.
+
+     The guard below tests the video alone. It also required that custom
+     button until now, which would make this whole function bail out on a
+     figure that hasn't got one - taking the skip and speed wiring with
+     it. */
   function initCaseVideos() {
     document.querySelectorAll('.case2-shot--video').forEach((figure) => {
       const video = figure.querySelector('video');
-      const button = figure.querySelector('.case2-video-play');
-      if (!video || !button) return;
-      const sync = () => {
-        const playing = !video.paused && !video.ended;
-        figure.classList.toggle('is-playing', playing);
-        button.setAttribute('aria-label', playing ? 'Pause video' : 'Play video');
-      };
-      button.addEventListener('click', () => {
-        if (video.paused || video.ended) video.play().catch(() => {});
-        else video.pause();
+      if (!video) return;
+
+      // Skip buttons, clamped to the clip. Pushing currentTime past
+      // duration makes some browsers fire 'ended' and rewind to 0, so an
+      // unclamped +10s near the end would restart the video rather than
+      // land on the last frame.
+      figure.querySelectorAll('[data-video-skip]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const by = parseFloat(btn.dataset.videoSkip) || 0;
+          const dur = Number.isFinite(video.duration) ? video.duration : Infinity;
+          video.currentTime = Math.max(0, Math.min(dur, video.currentTime + by));
+        });
       });
-      ['play', 'pause', 'ended'].forEach((type) => video.addEventListener(type, sync));
-      sync();
+
+      // Speed cycles a fixed ladder instead of opening a menu: one
+      // control, one tap, and the button itself shows the current rate.
+      // Steps up from 1 first - speeding a documentation clip up is the
+      // common case - with the slower rates coming round after.
+      const rateBtn = figure.querySelector('[data-video-rate]');
+      if (rateBtn) {
+        const RATES = [1, 1.25, 1.5, 2, 0.5, 0.75];
+        let rateIndex = 0;
+        const applyRate = () => {
+          const rate = RATES[rateIndex];
+          video.playbackRate = rate;
+          rateBtn.textContent = rate + '\u00D7';
+          rateBtn.setAttribute('aria-label', 'Playback speed ' + rate + ' times, press to change');
+        };
+        rateBtn.addEventListener('click', () => {
+          rateIndex = (rateIndex + 1) % RATES.length;
+          applyRate();
+        });
+        applyRate();
+      }
     });
   }
 
@@ -940,6 +966,8 @@
       let current = 0;
       let animating = false;
       let autoTimer = null;
+      // Driven by the IntersectionObserver at the end of this function.
+      let inView = false;
 
       // Warm the next couple of spreads only, not the whole book up
       // front — the Hamleys deck alone is 50 images.
@@ -1018,6 +1046,10 @@
           if (animating) return;
         }
         if (reduceMotion) return;
+        // Gated here rather than at each call site: scheduleAuto also runs
+        // when a turn finishes and after an arrow click, and all of those
+        // have to stay quiet while the book is off screen.
+        if (!inView) return;
         clearTimeout(autoTimer);
         autoTimer = setTimeout(advance, AUTO_MS);
       }
@@ -1108,7 +1140,30 @@
       };
       if (nextBtn) nextBtn.addEventListener('click', () => navigate('next'));
       if (prevBtn) prevBtn.addEventListener('click', () => navigate('prev'));
-      scheduleAuto();
+
+      // Autoplay runs only while the book is actually in frame. It used
+      // to start on page load, so a book sitting near the bottom of a
+      // case study had already turned several pages by the time anyone
+      // scrolled down to it - you arrived mid-deck instead of at the
+      // cover. A quarter-of-the-book threshold rather than a rootMargin
+      // band: the band version keyed off WHERE in the viewport the book
+      // sat, so a short book parked near the top or bottom edge counted
+      // as absent even while plainly on screen. A fraction of the book
+      // itself holds wherever it sits, and for a book taller than the
+      // viewport 0.25 is still reachable.
+      if ('IntersectionObserver' in window) {
+        const auto = new IntersectionObserver(([entry]) => {
+          inView = entry.isIntersecting;
+          if (inView) scheduleAuto();
+          else clearTimeout(autoTimer);
+        }, { threshold: 0.25 });
+        auto.observe(book);
+      } else {
+        // No observer support: fall back to the old always-on timer
+        // rather than a book that never turns at all.
+        inView = true;
+        scheduleAuto();
+      }
     });
   }
 

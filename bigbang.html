@@ -17,8 +17,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=275">
+<link href="https://fonts.googleapis.com/css2?family=Gasoek+One&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=291">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -72,12 +72,21 @@
       <div class="case2-shots case2-shots--wide">
         <figure class="case2-shot case2-shot--video">
           <video controls playsinline preload="metadata" src="assets/tousebigbang/0.mp4" aria-label="The final video documentation of The Big Bang Theory interactive book"></video>
-          <!-- Centered play/pause (script.js initCaseVideos) — the native
-               controls keep the seek bar, time and volume. -->
-          <button class="case2-video-play" type="button" aria-label="Play video">
-            <svg class="case2-video-play__icon case2-video-play__icon--play" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 5.5v13a1 1 0 0 0 1.53.848l10.4-6.5a1 1 0 0 0 0-1.696l-10.4-6.5A1 1 0 0 0 7 5.5Z" fill="currentColor"/></svg>
-            <svg class="case2-video-play__icon case2-video-play__icon--pause" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
-          </button>
+          <!--
+            Skip and speed controls. Parked top-right on purpose: the
+            browser's own control strip owns the bottom edge, and the two
+            would otherwise sit on top of each other. They follow the
+            centred play button's show/hide rule - present while paused,
+            out of the way during playback, back on hover or keyboard
+            focus. The 1x label is replaced by initCaseVideos on load; it
+            is written here so the control still reads correctly with no
+            JavaScript.
+          -->
+          <div class="case2-video-tools">
+            <button class="case2-video-tool" type="button" data-video-skip="-10" aria-label="Back 10 seconds">&minus;10s</button>
+            <button class="case2-video-tool" type="button" data-video-skip="10" aria-label="Forward 10 seconds">+10s</button>
+            <button class="case2-video-tool case2-video-tool--rate" type="button" data-video-rate>1&times;</button>
+          </div>
         </figure>
       </div>
       <p class="case2-shot__caption">The final video documentation</p>
@@ -112,14 +121,14 @@
         <p>I began with layout ideation, sketching different page structures and interactive mechanisms based on each character and chapter. I then explored multiple cover directions and visual treatments before finalising the comic-inspired identity. The book went through draft printing and physical testing, allowing me to check scale, placement, folds, and interactions. Finally, I refined the layouts, produced the final prints and pasting, and assembled the interactive elements, including cut-outs, stickers, and layered components, into the finished&nbsp;book.</p>
       </div>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/5.jpg?v=2" alt="Layout iterations sketching different page structures and interactive mechanisms." loading="lazy"></figure>
+        <figure class="case2-shot"><img src="assets/tousebigbang/5.jpg?v=3" alt="Layout iterations sketching different page structures and interactive mechanisms." loading="lazy"></figure>
       </div>
       <p class="case2-shot__caption">Layout Iterations</p>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/6.jpg?v=2" alt="The book's printed character stickers laid out across a red spread." loading="lazy"></figure>
+        <figure class="case2-shot"><img src="assets/tousebigbang/6.jpg?v=3" alt="The book's printed character stickers laid out across a red spread." loading="lazy"></figure>
       </div>
       <div class="case2-shots case2-shots--wide case2-shots--wide-native">
-        <figure class="case2-shot"><img src="assets/tousebigbang/7.jpg?v=2" alt="Pasting and assembling the printed pages into the finished book." loading="lazy"></figure>
+        <figure class="case2-shot"><img src="assets/tousebigbang/7.jpg?v=3" alt="Pasting and assembling the printed pages into the finished book." loading="lazy"></figure>
       </div>
       <p class="case2-shot__caption">Printing and Pasting</p>
 
@@ -284,6 +293,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=275"></script>
+<script src="script.js?v=291"></script>
 </body>
 </html>

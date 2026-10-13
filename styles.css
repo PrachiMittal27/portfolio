@@ -14,7 +14,23 @@
   --color-case2-bg: var(--color-cream); /* was #1A1A1A, a client-supplied near-black; per direct request the detailed-project pages are now an off-white beige. Points at the existing --color-cream rather than a new hex, because that is already this site's off-white (hero, About, Testimonials) - one fewer near-duplicate swatch to keep in sync. */
   --color-case2-text: var(--color-ink); /* flipped together with --color-case2-bg above: was --color-cream, for text on near-black; now the body ink, for text on beige. Everything that reads this token (.case2, .case2-back, .case2-meta, .case2-section p, .case2-shot__caption) inverts with it. The orange pills and the Next button keep their own cream text, which stays correct against orange on any ground. */
 
-  --font-display: "Poppins", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Two faces, split strictly by job — per direct request, the big bold
+     display headings move to Gasoek One while everything else stays on
+     Poppins ("for the body and subheading you can keep Poppins, but for
+     the main text, which is very big in size and bold in size, you can
+     use this one").
+
+     Gasoek One ships ONE weight (400) and is already poster-heavy at it,
+     so every rule that reads --font-display sets font-weight: 400. Asking
+     for 600/700/800 there would make the browser smear a synthetic bold
+     over an already-black face, which reads as blurred rather than
+     bolder. font-synthesis below enforces that even if a weight is ever
+     reintroduced by mistake.
+
+     The two stacks are deliberately NOT interchangeable: --font-display
+     is for short poster-scale lines (WHY?, PRACHI MITTAL, BGL), never
+     for sentences. Running copy set in it turns into a wall of black. */
+  --font-display: "Gasoek One", "Poppins", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* the one structural, layout-changing breakpoint in this build:
@@ -90,6 +106,31 @@ body {
      client-specified tracking values and inherit nothing from this. */
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Belt-and-suspenders for the single-weight display face (see
+   --font-display). Every rule in this list already sets font-weight:400,
+   so this changes nothing today - it is here so that if a weight ever
+   gets reintroduced into one of these blocks, the browser refuses to
+   fake it rather than silently rendering a smeared pseudo-bold that
+   looks like a rendering bug. Keep this list in step with the rules that
+   read --font-display. */
+.hero__headline,
+.why-heading,
+.project-category__label,
+.about-heading,
+.philosophy-copy__heading,
+.testimonials-heading,
+.contact-heading,
+.footer__wordmark-group,
+.case-hero__title,
+.case2-title,
+.case2-section__heading,
+.case-beat__heading,
+.btn-pill,
+.case2-next__link {
+  -webkit-font-synthesis: none;
+  font-synthesis: none;
 }
 h1, h2, p, ul { margin: 0; }
 ul { padding: 0; list-style: none; }
@@ -513,11 +554,13 @@ body:has(.case2) .footer {
 }
 .hero__headline {
   font-family: var(--font-display);
-  /* client's Adobe spec: Medium weight, 56pt/65pt leading (ratio
-     65/56 kept unitless so it scales with the fluid font-size instead
-     of drifting loose/tight at other viewports), -32 tracking
-     (Adobe's tracking unit is 1/1000 em) */
-  font-weight: 500;
+  /* Was Poppins Medium, from the client's Adobe spec (56pt/65pt
+     leading, -32 tracking). Per direct request the hero line moved to
+     the display face along with the other big headings. Gasoek One has
+     a single weight, so the spec's Medium is no longer expressible -
+     the leading and tracking below are still the spec's, and are now
+     doing all of the work of keeping this readable at three lines. */
+  font-weight: 400;
   font-size: var(--fs-headline);
   /* was 1.161 (the spec's 65/56) — tightened slightly per direct
      request */
@@ -537,9 +580,31 @@ body:has(.case2) .footer {
    text-brandPink in the reference files */
 .hero__headline-accent {
   color: var(--color-pink);
-  /* real Poppins Medium Italic (ital 1,500 in index.html's font link),
-     not a synthesized slant */
-  font-style: italic;
+
+  /* This phrase was real Poppins Medium Italic before the line moved to
+     Gasoek One, which ships no italic (and no oblique) face at all. Per
+     direct request to slant it anyway, the browser synthesizes one by
+     shearing the upright glyphs.
+
+     That means re-allowing the style half of the synthesis that
+     --font-display's guard rule switches off for this element's parent.
+     Only the style half: "style" leaves weight synthesis off, so a
+     stray font-weight here still cannot fake a bolder Gasoek.
+
+     The angle is pinned rather than left to `font-style: italic`,
+     because the angle a browser picks for a synthesized italic is its
+     own choice and differs between engines - the slant would not match
+     across Chrome, Safari and Firefox. 12deg is a touch under the usual
+     ~14deg default: this face is heavy enough that a steeper shear
+     starts to read as a glitch rather than an italic.
+
+     Two declarations, not one: a browser too old for the `oblique
+     <angle>` syntax drops that whole line and keeps the plain `oblique`
+     above it, landing on its own default slant instead of upright. */
+  font-synthesis: style;
+  -webkit-font-synthesis: style;
+  font-style: oblique;
+  font-style: oblique 12deg;
 }
 
 /* ---------------------------------------------------------------
@@ -727,7 +792,7 @@ body:has(.case2) .footer {
 }
 .why-heading {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: var(--fs-why);
   /* tight leading to prevent massive gap under the huge text */
   line-height: 1;
@@ -746,7 +811,7 @@ body:has(.case2) .footer {
   gap: clamp(0.35rem, 1vw, 0.75rem);
 }
 .why-statement {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   /* client's Photoshop/Illustrator spec: Medium weight, 65px/28px
      leading (kept unitless so it scales with the fluid font-size
      instead of a fixed px value drifting at other viewports), -32
@@ -1349,7 +1414,7 @@ body:has(.case2) .footer {
   display: inline-block;
   font-family: var(--font-display);
   /* was 800 (extra bold) — per direct request, semibold */
-  font-weight: 600;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   /* was clamp(1.75rem, 2vw + 1.2rem, 3.5rem) — per direct request */
   font-size: clamp(2.25rem, 2.5vw + 1.6rem, 4.5rem);
   letter-spacing: -0.01em;
@@ -1547,7 +1612,7 @@ body:has(.case2) .footer {
 }
 .about-heading {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: clamp(2.5rem, 4.2vw + 1.2rem, calc(var(--fs-scale-h2) * 1.3));
   letter-spacing: -0.02em;
   /* was clamp(3.5rem, 9vw, 6.5rem) — on top of .stats-cluster's own
@@ -1677,7 +1742,7 @@ body:has(.case2) .footer {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #FDD9E5;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: clamp(1.1rem, 4.4vw, 2.25rem);
   line-height: 1;
@@ -2107,7 +2172,7 @@ body:has(.case2) .footer {
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 50px;
   padding: 0.25rem 0.875rem;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -2126,7 +2191,7 @@ body:has(.case2) .footer {
 
 .philosophy-copy__heading {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: clamp(2.6rem, 5.3vw, 4.75rem);
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -2136,14 +2201,19 @@ body:has(.case2) .footer {
    "The Process", "The Impact"), lighter than the rest per direct
    request — everything else stays at the heading's 800 */
 .philosophy-copy__heading-lead {
-  font-weight: 500;
+  /* was 500, to sit lighter than the heading's own 800. The heading is
+     Gasoek One now, which has only weight 400, so that contrast is no
+     longer available at all - matching it keeps "The" from being
+     synthetically bolded into a blur. The --heading-accent color on the
+     closing word still separates the two halves. */
+  font-weight: 400;
 }
 .philosophy-copy__heading-accent {
   color: var(--color-ink);
 }
 
 .philosophy-copy__para {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 400;
   font-size: clamp(1.15rem, 2.1vw, 1.6rem);
   line-height: 1.6;
@@ -2155,7 +2225,7 @@ body:has(.case2) .footer {
 }
 
 .philosophy-copy__quote {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-style: italic;
   font-size: clamp(1.4rem, 2.5vw, 2.2rem);
@@ -2163,7 +2233,7 @@ body:has(.case2) .footer {
 }
 
 .philosophy-copy__tags-label {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -2310,7 +2380,7 @@ body:has(.case2) .footer {
 }
 .testimonials-heading {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: clamp(2rem, 3.5vw + 1rem, var(--fs-scale-h1));
   letter-spacing: -0.02em;
   margin-bottom: clamp(2.5rem, 6vw, 4rem);
@@ -2350,7 +2420,25 @@ body:has(.case2) .footer {
      pinned at its own 320px width floor too, so the quote is at its
      narrowest and therefore its tallest. Measured at 768px, the
      longest testimonial needs 435px; 420px clipped it by 15. */
-  height: clamp(480px, 44vw, 580px);
+  /* Lowered from clamp(480px, 44vw, 580px) per direct request that the
+     section was too tall. The saving comes from the expanded card
+     being wider below (a quote wraps to fewer lines) plus the dead gap
+     removed above, not from clipping - every quote is still measured
+     to fit. */
+  /* The binding case is the WIDE end, not the narrow one: the quote's
+     own font-size is fluid (clamp(1rem, 1.45vw, 1.2rem)), so the text
+     grows with the viewport and the tallest testimonial needs ~421px at
+     1900px but only ~322px at 768px. The floor is therefore sized for
+     the small end and the ceiling for the large one, instead of one
+     generous number that left a third of the card empty on tablets. */
+  /* Fitted to measurements, not picked: the tallest testimonial needs
+     ~322px at 768, ~411px at 1280 and ~421px from ~1324 up. That curve
+     is steep between 800 and 1324 and flat after, because the card hits
+     its 480px cap early while the quote's font keeps growing to its own
+     1.2rem cap. A plain Nvw height lagged that rise and clipped three
+     cards at 1280. The calc() slope follows it instead, leaving ~45px
+     spare - about 22px above and below once centred - at every width. */
+  height: clamp(390px, calc(235px + 17.4vw), 470px);
   overflow-x: auto;
 }
 .testimonial-card {
@@ -2368,15 +2456,41 @@ body:has(.case2) .footer {
   /* was clamp(320px, 40vw, 460px) — widened along with the row's
      height above, so the extra room for the real quotes comes from
      both axes instead of the card growing tall and narrow. */
-  flex-basis: clamp(320px, 42vw, 520px);
+  /* Narrowed from a 600px cap. Counter-intuitive but deliberate: a
+     narrower column wraps the same quote over more lines, so the card's
+     fixed height is filled by text instead of left as empty pink. */
+  /* 60vw, not 36vw: the narrow end is what sets this section's height,
+     because a narrower column wraps the same quote over more lines. At
+     36vw a 768px viewport gave a 300px card whose longest testimonial
+     needed 495px - 103px more than the row could show, so it was cut
+     off. Holding the card near full width down there keeps the tallest
+     quote close to its desktop height, which is what lets the row stay
+     short. The row overflows and scrolls at that size, which is fine -
+     safe center keeps both ends reachable. */
+  flex-basis: clamp(380px, 60vw, 480px);
 }
 .testimonial-card__content {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  /* was justify-content: space-between, from when the quote came first
+     and the author was pinned to the bottom edge - on a tall card that
+     opened a large dead gap between the end of a short quote and the
+     name. The author block leads now, so the two simply stack with one
+     deliberate gap below it. */
+  /* Centred, not flex-start: whatever room the quote doesn't need is
+     then split evenly above and below the block, so a short testimonial
+     reads as deliberate padding rather than text stuck to the top edge
+     with a void under it. */
+  justify-content: center;
+  /* Opened up a step per direct request - the name block was sitting
+     a little too close to the quote under it. Kept modest: this gap
+     counts toward the content height the row's own height curve is
+     fitted to, so a large jump here would start clipping the longest
+     testimonials. */
+  gap: clamp(1.15rem, 2.3vw, 1.6rem);
   align-items: flex-start;
   height: 100%;
-  padding: clamp(1.5rem, 3vw, 2.25rem);
+  padding: clamp(1.4rem, 2.6vw, 2rem);
   text-align: left;
   color: var(--color-on-ink);
   opacity: 0;
@@ -2387,7 +2501,7 @@ body:has(.case2) .footer {
   transition-delay: 200ms;
 }
 .testimonial-card__quote {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   /* bumped from clamp(0.95rem,1.4vw,1.15rem) — the row grew taller (a
      few lines up) without this, and .testimonial-card__content's
      justify-content:space-between just pushed that extra height into
@@ -2408,7 +2522,6 @@ body:has(.case2) .footer {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.5rem;
 }
 .testimonial-card__avatar {
   width: 2.5rem;
@@ -2424,9 +2537,22 @@ body:has(.case2) .footer {
   flex-shrink: 0;
 }
 .testimonial-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.testimonial-card__name {
+  font-size: 0.95rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+/* The business sits under the name at the same muted weight the footer
+   uses for secondary lines - present, but not competing with it. */
+.testimonial-card__business {
   font-size: 0.8rem;
-  line-height: 1.4;
-  font-weight: 600;
+  line-height: 1.3;
+  font-weight: 500;
+  color: rgba(250, 245, 236, 0.72);
 }
 
 /* The desktop pattern — a row of narrow collapsed bars plus one wide
@@ -2507,7 +2633,7 @@ body:has(.case2) .footer {
 }
 .contact-heading {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: clamp(2.75rem, 6vw + 1rem, 5.5rem);
   letter-spacing: -0.02em;
   line-height: 1;
@@ -2630,8 +2756,18 @@ body:has(.case2) .footer {
   justify-content: center;
   background: var(--color-on-ink);
   color: var(--color-pink);
-  font-weight: 700;
+  /* Display face per direct request ("major CTA buttons"). This is by
+     far the smallest thing set in Gasoek One - everything else using it
+     is 1.75rem and up - so the tracking below is doing real work. */
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: 1.05rem;
+  /* Positive, where the rest of the site tracks negative. body sets a
+     global -0.01em to tighten Poppins, which is wrong for this face at
+     this size: Gasoek's glyphs are wide and already nearly touch at
+     default tracking, so pulling them closer starts closing the
+     counters up at button scale. */
+  letter-spacing: 0.01em;
   padding: 0.9rem 2.2rem;
   border-radius: 999px;
   text-decoration: none;
@@ -2767,7 +2903,7 @@ body:has(.case2) .footer {
 .footer__wordmark-group {
   flex-shrink: 0;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: clamp(4rem, 18vw, 18rem);
   line-height: 0.8;
   letter-spacing: -0.02em;
@@ -2852,7 +2988,7 @@ body:has(.case2) .footer {
   border-bottom: 1px solid rgba(33, 26, 20, 0.12);
 }
 .resume-modal__title {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: clamp(1.15rem, 1.2vw + 0.9rem, 1.5rem);
   letter-spacing: -0.02em;
@@ -3080,7 +3216,7 @@ body.resume-open {
 }
 .case-hero__title {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -3167,7 +3303,7 @@ body.resume-open {
   max-width: 8rem;
 }
 .case-project-divider__label {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 0.8rem;
   letter-spacing: 0.14em;
@@ -3308,7 +3444,7 @@ body.resume-open {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
@@ -3323,9 +3459,12 @@ body.resume-open {
   background: currentColor;
   display: inline-block;
 }
+/* research.html's older case template - same job as
+   .case2-section__heading above, so it moves with it rather than being
+   left as the one page whose sub-heads are still Poppins. */
 .case-beat__heading {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: clamp(1.5rem, 1.6vw + 1.1rem, 2.25rem);
   letter-spacing: -0.01em;
   margin-bottom: 1rem;
@@ -3372,7 +3511,7 @@ body.resume-open {
 }
 .case-pullquote__mark {
   display: block;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 800;
   font-size: 4.5rem;
   line-height: 1;
@@ -3381,7 +3520,7 @@ body.resume-open {
   margin-bottom: -0.75rem;
 }
 .case-pullquote p {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: clamp(1.5rem, 2.2vw + 1rem, 2.5rem);
   letter-spacing: -0.015em;
@@ -3640,18 +3779,12 @@ body.resume-open {
 .case2-title {
   font-family: var(--font-display);
   /* was 800 (extra bold) — per direct request, dialed back to semibold */
-  font-weight: 600;
+  font-weight: 400; /* Gasoek One has a single weight; see --font-display */
   text-transform: uppercase;
   /* previous bumps (3.25/6.5 -> 3.75/7.5 -> 4.25/8.5 -> 5.5/11rem)
      kept growing per direct request each time — this pulls back down
      a step per a follow-up request to reduce it again. */
   font-size: clamp(4.5rem, 6.5vw + 2.5rem, 9rem);
-  /* Per direct request: the project name is the one thing on these
-     pages in the palette's dark pink. The section headings under it
-     (The Brief, The Process...) deliberately stay the body ink, so
-     the title reads as the single accent rather than competing with
-     a page full of pink. */
-  color: var(--color-pink);
   letter-spacing: -0.02em;
   line-height: 1.02;
   /* per direct request — the title centers within the same column the
@@ -3843,8 +3976,13 @@ body.resume-open {
   margin-top: clamp(3rem, 7vw, 5rem);
 }
 .case2-section__heading {
+  /* Per direct request these moved to the display face too. Note this
+     is a font change only - the earlier instruction that the sub-heads
+     stay "blackish" while the main title went pink was about colour,
+     and still holds: this rule sets no colour, so they keep inheriting
+     --color-case2-text like the body copy around them. */
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 400;
   font-size: clamp(1.75rem, 1.8vw + 1.3rem, 2.6rem);
   /* was 0.85rem — per direct request, tightened the gap to the body
      copy right under it */
@@ -4104,8 +4242,11 @@ body.resume-open {
   color: var(--color-on-ink);
   /* was font-weight:700, font-size:1.15rem (fixed) — matched to
      .case2-pill's own text properties per direct request. */
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
   font-size: clamp(1.2rem, 0.55vw + 1.1rem, 1.45rem);
+  /* same reasoning as .btn-pill's tracking */
+  letter-spacing: 0.01em;
   /* was 0.85rem 1.75rem — matched to .case2-pill's own padding per
      direct request, so the button box is the same size as the role
      tags, not just the same text. */
@@ -4283,7 +4424,7 @@ body.resume-open {
   height: 1.1rem;
 }
 .flipbook__count {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 1.05rem;
   color: var(--color-ink);
@@ -4313,54 +4454,60 @@ body.resume-open {
   aspect-ratio: 16 / 9;
   background: #000;
 }
-/* The native controls' own play button sits bottom-left — hidden in
-   favour of the centered one below (Chrome/Safari/Edge; Firefox has no
-   hook for this and keeps its own alongside). The overlay variant is
-   Chrome's big mobile play button, which would stack on top of ours. */
-.case2-shot--video video::-webkit-media-controls-play-button,
-.case2-shot--video video::-webkit-media-controls-overlay-play-button {
-  display: none;
-}
-/* Same cream disc as the homepage TV's play button, scaled up for a
-   full-width video. Visible while paused; fades out during playback
-   and comes back on hover/focus so it never sits over the footage. */
-.case2-video-play {
+/* The native play button is deliberately left alone now. A custom centred
+   disc used to replace it, which is why the native one was hidden here -
+   both that button and this rule's old display:none are gone, so the
+   browser's own strip supplies play/pause. */
+/* Skip / speed controls for .case2-shot--video. They sit above the
+   browser's own control strip rather than within it - native chrome can't
+   be added to - and stay visible throughout, because skip and speed are
+   wanted mid-clip, not only while paused. */
+.case2-video-tools {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: clamp(56px, 8vw, 84px);
-  height: clamp(56px, 8vw, 84px);
-  border-radius: 50%;
+  /* Sits just clear of the browser's own control strip along the bottom
+     edge, so every control for this video is in one place. It was
+     top-right, which both collided with the sticky header pill and put
+     the skip buttons nowhere near the seek bar they relate to. The
+     native strip's height isn't exposed to CSS, so this is a fixed
+     clearance sized to clear it on the browsers this site targets. */
+  /* Raised from 3rem. That cleared the control strip's own height but
+     left these pills sitting flush on top of the volume / picture-in-
+     picture / fullscreen buttons at its right end, so the two rows read
+     as one jumbled cluster. The strip is roughly 48px on a large video
+     and its height isn't exposed to CSS, so this is deliberately a
+     generous clearance rather than a tight fit - there should be a
+     visible gap between the two rows, not a seam. */
+  bottom: clamp(4.5rem, 5.5vw, 5.5rem);
+  right: clamp(0.6rem, 1.5vw, 1rem);
+  display: flex;
+  gap: 0.4rem;
+}
+.case2-video-tool {
   border: none;
+  border-radius: 999px;
   background: var(--color-on-ink);
   color: var(--color-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: clamp(0.72rem, 0.85vw, 0.85rem);
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.45rem 0.7rem;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  transition: opacity 0.3s ease, transform 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
-.case2-video-play:hover,
-.case2-video-play:focus-visible {
-  transform: translate(-50%, -50%) scale(1.08);
+.case2-video-tool:hover,
+.case2-video-tool:focus-visible {
   background: var(--color-cream);
+  transform: translateY(-1px);
 }
-.case2-video-play__icon {
-  width: 42%;
-  height: 42%;
+/* Fixed width so cycling 1x -> 1.25x doesn't shuffle the row sideways. */
+.case2-video-tool--rate {
+  min-width: 3.1rem;
 }
-.case2-video-play__icon--pause { display: none; }
-.case2-shot--video.is-playing .case2-video-play__icon--play { display: none; }
-.case2-shot--video.is-playing .case2-video-play__icon--pause { display: block; }
-.case2-shot--video.is-playing .case2-video-play {
-  opacity: 0;
-}
-.case2-shot--video.is-playing:hover .case2-video-play,
-.case2-shot--video.is-playing .case2-video-play:focus-visible {
-  opacity: 1;
-}
+/* Deliberately NOT faded during playback the way the centred play button
+   is. Skip and speed are wanted mid-clip, which is exactly when that
+   rule had them disappear - they read as missing rather than tidy. */
 .flipbook--square {
   max-width: 900px;
 }
