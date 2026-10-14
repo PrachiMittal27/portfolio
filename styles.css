@@ -124,11 +124,7 @@ body {
 .contact-heading,
 .footer__wordmark-group,
 .case-hero__title,
-.case2-title,
-.case2-section__heading,
-.case-beat__heading,
-.btn-pill,
-.case2-next__link {
+.case2-title {
   -webkit-font-synthesis: none;
   font-synthesis: none;
 }
@@ -557,15 +553,18 @@ body:has(.case2) .footer {
   /* Was Poppins Medium, from the client's Adobe spec (56pt/65pt
      leading, -32 tracking). Per direct request the hero line moved to
      the display face along with the other big headings. Gasoek One has
-     a single weight, so the spec's Medium is no longer expressible -
-     the leading and tracking below are still the spec's, and are now
-     doing all of the work of keeping this readable at three lines. */
+     a single weight, so the spec's Medium is no longer expressible.
+     The leading below is still the spec's; the tracking has been
+     loosened from it (see below). */
   font-weight: 400;
   font-size: var(--fs-headline);
   /* was 1.161 (the spec's 65/56) — tightened slightly per direct
      request */
   line-height: 1.08;
-  letter-spacing: -0.032em;
+  /* was -0.032em (the spec's -32, set for Poppins Medium) — opened up
+     a little per direct request. Gasoek's glyphs are wide and heavy,
+     and at the Poppins tracking they were crowding each other. */
+  letter-spacing: -0.01em;
   font-kerning: auto;
   text-wrap: balance;
   max-width: 29ch;
@@ -1501,7 +1500,9 @@ body:has(.case2) .footer {
    own on-ink color, no color/background of its own needed */
 .project-thumb__caption {
   font-size: 0.9rem;
-  font-weight: 500;
+  /* was 500 — per direct request, one step heavier so the captions
+     hold their own next to the Gasoek One category label above them */
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {
@@ -2756,18 +2757,11 @@ body:has(.case2) .footer {
   justify-content: center;
   background: var(--color-on-ink);
   color: var(--color-pink);
-  /* Display face per direct request ("major CTA buttons"). This is by
-     far the smallest thing set in Gasoek One - everything else using it
-     is 1.75rem and up - so the tracking below is doing real work. */
-  font-family: var(--font-display);
-  font-weight: 400;
+  /* Briefly on Gasoek One; per direct request back on the inherited
+     Poppins, one step bolder than its old 700 to sit closer to the
+     display face's weight. */
+  font-weight: 800;
   font-size: 1.05rem;
-  /* Positive, where the rest of the site tracks negative. body sets a
-     global -0.01em to tighten Poppins, which is wrong for this face at
-     this size: Gasoek's glyphs are wide and already nearly touch at
-     default tracking, so pulling them closer starts closing the
-     counters up at button scale. */
-  letter-spacing: 0.01em;
   padding: 0.9rem 2.2rem;
   border-radius: 999px;
   text-decoration: none;
@@ -3460,11 +3454,11 @@ body.resume-open {
   display: inline-block;
 }
 /* research.html's older case template - same job as
-   .case2-section__heading above, so it moves with it rather than being
-   left as the one page whose sub-heads are still Poppins. */
+   .case2-section__heading below, so it moves with it rather than being
+   left as the one page whose sub-heads are still on Gasoek One. */
 .case-beat__heading {
-  font-family: var(--font-display);
-  font-weight: 400;
+  font-family: var(--font-sans);
+  font-weight: 900;
   font-size: clamp(1.5rem, 1.6vw + 1.1rem, 2.25rem);
   letter-spacing: -0.01em;
   margin-bottom: 1rem;
@@ -3976,13 +3970,13 @@ body.resume-open {
   margin-top: clamp(3rem, 7vw, 5rem);
 }
 .case2-section__heading {
-  /* Per direct request these moved to the display face too. Note this
-     is a font change only - the earlier instruction that the sub-heads
-     stay "blackish" while the main title went pink was about colour,
-     and still holds: this rule sets no colour, so they keep inheriting
-     --color-case2-text like the body copy around them. */
-  font-family: var(--font-display);
-  font-weight: 400;
+  /* Briefly on Gasoek One; per direct request back on Poppins, and a
+     step bolder than its old 800 so it carries some of the display
+     face's weight without competing with the Gasoek title above.
+     Colour is untouched: this rule sets none, so the sub-heads keep
+     inheriting --color-case2-text like the body copy around them. */
+  font-family: var(--font-sans);
+  font-weight: 900;
   font-size: clamp(1.75rem, 1.8vw + 1.3rem, 2.6rem);
   /* was 0.85rem — per direct request, tightened the gap to the body
      copy right under it */
@@ -4241,12 +4235,11 @@ body.resume-open {
   /* was var(--color-ink) — per direct request, not black */
   color: var(--color-on-ink);
   /* was font-weight:700, font-size:1.15rem (fixed) — matched to
-     .case2-pill's own text properties per direct request. */
-  font-family: var(--font-display);
-  font-weight: 400;
+     .case2-pill's own text properties per direct request. Then briefly
+     on Gasoek One; per direct request back on the inherited Poppins,
+     one step bolder than the pills' 600, same as .btn-pill. */
+  font-weight: 700;
   font-size: clamp(1.2rem, 0.55vw + 1.1rem, 1.45rem);
-  /* same reasoning as .btn-pill's tracking */
-  letter-spacing: 0.01em;
   /* was 0.85rem 1.75rem — matched to .case2-pill's own padding per
      direct request, so the button box is the same size as the role
      tags, not just the same text. */
