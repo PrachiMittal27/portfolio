@@ -2727,14 +2727,21 @@ body:has(.case2) .footer {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  /* Generic profile silhouette in the cream on-ink color — no client
-     photos, and a bare dark disc read as a missing image. The
+  /* Generic profile silhouette in the cream on-ink color, for clients
+     without a photo — a bare dark disc read as a missing image. The
      shoulders run past the bottom of the viewBox so the avatar's own
      round edge (border-radius + overflow) crops them, instead of the
-     body ending in a flat cut inside the circle. */
+     body ending in a flat cut inside the circle. A client photo (an
+     <img> inside, assets/testimonials/) covers it. */
   background: var(--color-ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='15' r='7' fill='%23FAF5EC'/%3E%3Cpath d='M4 44C4 32 11 25.5 20 25.5S36 32 36 44Z' fill='%23FAF5EC'/%3E%3C/svg%3E") center / 100% no-repeat;
   overflow: hidden;
   flex-shrink: 0;
+}
+.testimonial-card__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .testimonial-card__meta {
   display: flex;
