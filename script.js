@@ -15,6 +15,13 @@
   // the two fighting over the scroll position each frame.
   let lenisInstance = null;
 
+  // Resolves the moment the homepage intro (initIntro) starts lifting
+  // off the hero - or straight away on any page or visit without one -
+  // so initEntrance holds the navbar/headline entrance until there's
+  // something to see instead of playing it behind a black screen.
+  let revealIntro;
+  const introRevealed = new Promise((resolve) => { revealIntro = resolve; });
+
   /* ---------------- Always open on the hero ----------------
      Two things could land a fresh visit partway down the page:
      the in-page nav links are plain anchors, so clicking "About Me"
@@ -227,8 +234,7 @@
     // breakpoint is crossed hands rendering back to the desktop CSS,
     // which never had an opacity rule to override in the first place.
     const mobileMq = window.matchMedia('(max-width: 640px)');
-    const clearInlineStateIfDesktop = (isMobile) => {
-      if (isMobile) return;
+    const clearInlineState = () => {
       toggle.setAttribute('aria-expanded', 'false');
       if (list) {
         list.style.opacity = '';
@@ -236,8 +242,37 @@
         list.style.pointerEvents = '';
       }
     };
+    const clearInlineStateIfDesktop = (isMobile) => {
+      if (isMobile || header.classList.contains('site-header--compact')) return;
+      clearInlineState();
+    };
     clearInlineStateIfDesktop(mobileMq.matches);
     mobileMq.addEventListener('change', (e) => clearInlineStateIfDesktop(e.matches));
+
+    // Above 640px the links sit inline and wrap if they run out of room
+    // - with browser zoom or a larger default font, "Contact" dropped
+    // onto a second line inside the pill at tablet/laptop widths, per
+    // direct report. Whenever that would happen, switch to the same
+    // hamburger as phones (.site-header--compact, styles.css). Measured
+    // with the class off and put straight back, all in one frame, so
+    // the inline layout never actually paints.
+    const links = list ? Array.from(list.querySelectorAll('.nav-link')) : [];
+    const updateCompact = () => {
+      if (links.length < 2) return;
+      const wasCompact = header.classList.contains('site-header--compact');
+      header.classList.remove('site-header--compact');
+      const wraps = !mobileMq.matches
+        && links.some((link) => Math.abs(link.offsetTop - links[0].offsetTop) > 2);
+      header.classList.toggle('site-header--compact', wraps);
+      if (wasCompact && !wraps) clearInlineState();
+    };
+    updateCompact();
+    let compactFrame = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(compactFrame);
+      compactFrame = requestAnimationFrame(updateCompact);
+    });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateCompact);
   }
 
   /* ---------------- Magnetic nav links (desktop hover only) ---------------- */
@@ -314,6 +349,120 @@
     ScrollTrigger.addEventListener('refresh', () => lenis.resize());
   }
 
+  /* ---------------- Homepage intro ----------------
+     Black screen; the shell draws itself line by line and inks in
+     (pure CSS, see .intro in styles.css, so it starts on first paint).
+     Once that's done and the page has loaded, this flies the shell
+     into the navbar logo while the black slides up off the hero like a
+     curtain, then wipes the wordmark in from behind the shell. Plays
+     only when the inline script in index.html's <head> set
+     html.intro-pending; everywhere else this just resolves
+     introRevealed and gets out of the way. */
+  // Where the shell sits inside logo.png (640x164), as fractions of the
+  // image box, measured from the file's own pixels. The flying shell
+  // lands on exactly this rectangle of the navbar logo.
+  const LOGO_SHELL = { left: 9 / 640, top: 9 / 164, right: 182 / 640 };
+
+  function initIntro() {
+    const root = document.documentElement;
+    const intro = document.querySelector('.intro');
+    if (!intro || !root.classList.contains('intro-pending')) {
+      if (intro) intro.remove();
+      root.classList.remove('intro-pending');
+      revealIntro();
+      return;
+    }
+
+    const shell = intro.querySelector('.intro__shell');
+    const fill = intro.querySelector('.intro__shell-fill');
+    const bg = intro.querySelector('.intro__bg');
+    const logo = document.querySelector('.logo__mark');
+    intro.classList.add('is-running'); // cancels the CSS failsafe
+
+    root.classList.add('intro-lock');
+    if (lenisInstance) lenisInstance.stop();
+    // Hidden until the shell lands on it; then revealed shell-first.
+    const shellOnly = `inset(0% ${(100 - LOGO_SHELL.right * 100).toFixed(2)}% 0% 0%)`;
+    if (logo) logo.style.clipPath = 'inset(0% 100% 0% 0%)';
+
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      revealIntro();
+      intro.remove();
+      root.classList.remove('intro-pending', 'intro-lock');
+      if (logo) logo.style.clipPath = '';
+      if (lenisInstance) lenisInstance.start();
+      ScrollTrigger.refresh();
+    };
+    // Whatever goes wrong, never leave anyone stuck behind a black screen.
+    const safety = setTimeout(finish, 12000);
+
+    // The CSS drawing may already be over if the scripts were slow to
+    // arrive; getAnimations().finished resolves at once in that case.
+    const drawn = new Promise((resolve) => {
+      const anims = fill && typeof fill.getAnimations === 'function' ? fill.getAnimations() : [];
+      if (anims.length) {
+        Promise.all(anims.map((anim) => anim.finished)).then(resolve, resolve);
+      } else {
+        if (fill) fill.addEventListener('animationend', resolve, { once: true });
+        setTimeout(resolve, 3200);
+      }
+    });
+    // A real loading screen: hold for the page too, but not forever.
+    const loaded = new Promise((resolve) => {
+      if (document.readyState === 'complete') resolve();
+      else {
+        window.addEventListener('load', resolve, { once: true });
+        setTimeout(resolve, 6000);
+      }
+    });
+    const fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+
+    Promise.all([drawn, loaded, fontsReady]).then(() => {
+      if (!shell || !logo) { finish(); return; }
+      // Landing spot: the shell's rectangle inside the navbar logo. The
+      // header only fades (no slide) while the intro plays, so this is
+      // already its resting position.
+      const from = shell.getBoundingClientRect();
+      const logoRect = logo.getBoundingClientRect();
+      const scale = (logoRect.width * (LOGO_SHELL.right - LOGO_SHELL.left)) / from.width;
+      const x = logoRect.left + logoRect.width * LOGO_SHELL.left - from.left;
+      const y = logoRect.top + logoRect.height * LOGO_SHELL.top - from.top;
+
+      gsap.timeline({
+        delay: 0.25,
+        onComplete: () => {
+          clearTimeout(safety);
+          finish();
+        },
+      })
+        .call(() => {
+          intro.style.pointerEvents = 'none';
+          revealIntro();
+        }, null, 0)
+        // The black dissolves in place (per direct request, instead of
+        // sliding up with the shell), a little longer than the flight
+        // so the hero is still settling in as the shell lands.
+        .to(bg, { opacity: 0, duration: 1.4, ease: 'power2.inOut' }, 0)
+        .to(shell, { x, y, scale, duration: 1.15, ease: 'expo.inOut' }, 0)
+        // Swap the flying shell for the logo's own (same spot, same
+        // pink), then wipe the wordmark in from behind it. A plain .to()
+        // that picks up the clip this .call sets: a fromTo() here
+        // applies its "from" clip the moment the timeline is built, so
+        // the logo's small shell was already showing in the navbar
+        // through the whole flight, per direct report of a small frame
+        // flashing while the shell animated.
+        .call(() => {
+          logo.style.clipPath = shellOnly;
+          shell.style.visibility = 'hidden';
+        }, null, 1.15)
+        // Slowed per direct request (was 0.8s).
+        .to(logo, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.4, ease: 'power2.inOut' }, 1.15);
+    }).catch(finish);
+  }
+
   /* ---------------- Hero entrance ---------------- */
   function initEntrance() {
     const header = document.querySelector('.site-header__inner');
@@ -324,11 +473,24 @@
       return;
     }
 
+    // Everything below waits for introRevealed: with the homepage intro
+    // that's the moment the black starts lifting; otherwise immediately.
+    const introPlaying = document.documentElement.classList.contains('intro-pending');
+
     // navbar: fade in + settle down from -18px while sharpening out of
-    // a slight blur — a soft optical "focus pull," not a spring/bounce
+    // a slight blur — a soft optical "focus pull," not a spring/bounce.
+    // Under the intro it only fades: it has to be sitting still when
+    // the flying shell lands on its logo.
     if (header) {
-      gsap.set(header, { opacity: 0, y: -18, filter: 'blur(6px)' });
-      gsap.to(header, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.8, ease: 'power3.out' });
+      gsap.set(header, introPlaying ? { opacity: 0 } : { opacity: 0, y: -18, filter: 'blur(6px)' });
+      introRevealed.then(() => {
+        // Opacity only under the intro: a filter tween on the pill
+        // toggles its backdrop-filter glass mid-fade, which reads as a
+        // flicker of the whole pill.
+        gsap.to(header, introPlaying
+          ? { opacity: 1, duration: 1, ease: 'power2.out' }
+          : { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.8, ease: 'power3.out' });
+      });
     }
 
     // headline blurs in on load, same "focus pull" as the navbar above —
@@ -339,23 +501,32 @@
     // element fights that CSS sticky behavior and is what was causing
     // this and other scroll-driven elements elsewhere on the page to
     // read their positions against a shifting, inconsistent layout.
+    // Under the intro it starts a beat after the black begins to lift,
+    // so the words are coming into focus as they're uncovered.
+    const headlineDelay = introPlaying ? 0.35 : 0;
     if (typeof SplitText !== 'undefined' && headline) {
       const split = new SplitText(headline, { type: 'words', wordsClass: 'word' });
       gsap.set(split.words, { filter: 'blur(10px)' });
 
-      gsap.to(split.words, {
-        filter: 'blur(0px)',
-        duration: 1,
-        stagger: 0.05,
-        ease: 'power3.out',
+      introRevealed.then(() => {
+        gsap.to(split.words, {
+          filter: 'blur(0px)',
+          duration: 1,
+          stagger: 0.05,
+          ease: 'power3.out',
+          delay: headlineDelay,
+        });
       });
     } else if (headline) {
       gsap.set(headline, { filter: 'blur(10px)' });
 
-      gsap.to(headline, {
-        filter: 'blur(0px)',
-        duration: 1,
-        ease: 'power3.out',
+      introRevealed.then(() => {
+        gsap.to(headline, {
+          filter: 'blur(0px)',
+          duration: 1,
+          ease: 'power3.out',
+          delay: headlineDelay,
+        });
       });
     }
   }
@@ -582,10 +753,14 @@
     // shrinkage from a previous, narrower measurement.
     statement.style.fontSize = '';
 
-    // clientWidth (not getBoundingClientRect().width) so .why-pause's
-    // own padding-inline is already excluded — what's left is the
-    // real space available for its centered content row.
-    let availableWidth = pause.clientWidth;
+    // clientWidth still INCLUDES padding (it only drops borders and
+    // the scrollbar), so .why-pause's padding-inline has to come off
+    // by hand. Without that the sentence was fitted to the full 375px
+    // of a phone instead of the 335px inside the padding, and ran off
+    // the right edge with a sideways page scroll.
+    const pauseStyle = getComputedStyle(pause);
+    let availableWidth = pause.clientWidth
+      - parseFloat(pauseStyle.paddingLeft) - parseFloat(pauseStyle.paddingRight);
     // The two .why-statement__icon flank the text as flex siblings
     // inside .why-grid (gap between each) — leaving those out of
     // "available width" would let the icons push the whole row wider
@@ -649,6 +824,14 @@
       charEl.appendChild(inner);
       return inner;
     });
+
+    // Fit again now that the line is split. One inline-block per
+    // character drops the font's kerning, so the split line renders
+    // wider than the plain text measured above - on a 375px phone it
+    // pushed "curiosity." off the screen edge and gave the whole page a
+    // sideways scroll. (initResizeRefresh re-fits on resize and once
+    // webfonts land.)
+    fitWhyStatement();
 
     if (prefersReducedMotion()) {
       gsap.set([whyHeading, ...statementInnerTargets].filter(Boolean), { opacity: 1, clearProps: 'y,scale,rotate,filter' });
@@ -774,19 +957,42 @@
     // direct report with a screenshot ("Campaigr").
     const LABEL_WIDTH_BUFFER = 6;
     function sizeCycleLabelMask(mask) {
+      const row = mask.closest('.project-category__label-row') || mask;
+      const labels = row.querySelectorAll('.project-category__label');
+      // Back to the CSS size first, so a resize measures fresh instead
+      // of compounding a shrink from a narrower width.
+      labels.forEach((label) => { label.style.fontSize = ''; });
+
       const cs = getComputedStyle(mask.firstElementChild || mask);
       const canvas = sizeCycleLabelMask._canvas || (sizeCycleLabelMask._canvas = document.createElement('canvas'));
       const ctx = canvas.getContext('2d');
-      ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      const widest = Math.max(...LEFT_CATEGORY_SEQUENCE.map((word) => ctx.measureText(word).width));
-      const width = `${Math.ceil(widest) + LABEL_WIDTH_BUFFER}px`;
+      const measureWidest = (fontSize) => {
+        ctx.font = `${cs.fontWeight} ${fontSize} ${cs.fontFamily}`;
+        return Math.max(...LEFT_CATEGORY_SEQUENCE.map((word) => ctx.measureText(word).width));
+      };
+      let labelWidth = Math.ceil(measureWidest(cs.fontSize)) + LABEL_WIDTH_BUFFER;
+
+      // Two label boxes this wide plus the chip and both gaps have to
+      // fit the row. Gasoek One is wide, and in some bands (641-760px,
+      // or any width with browser zoom / a larger default font) they
+      // didn't: flex squeezed the boxes and the mask clipped the end of
+      // "Campaigns". When that happens, shrink every label in the row
+      // (both sides, so they still match) by exactly the shortfall.
+      const chip = row.querySelector('.project-category__chip');
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+      const room = row.clientWidth - (chip ? chip.offsetWidth : 0) - gap * 2;
+      if (room > 0 && labelWidth * 2 > room) {
+        const fitSize = `${parseFloat(cs.fontSize) * ((room / 2 - LABEL_WIDTH_BUFFER) / (labelWidth - LABEL_WIDTH_BUFFER))}px`;
+        labels.forEach((label) => { label.style.fontSize = fitSize; });
+        labelWidth = Math.ceil(measureWidest(fitSize)) + LABEL_WIDTH_BUFFER;
+      }
+
       // Set on the shared row, not just this mask, so the static
       // "Project" label on the other side of the chip (styles.css,
       // .project-category__label-mask--static) can match this same
       // width too — otherwise the two sides' unequal widths push the
       // chip off-center within the row's own justify-content:center.
-      const row = mask.closest('.project-category__label-row') || mask;
-      row.style.setProperty('--cycle-label-width', width);
+      row.style.setProperty('--cycle-label-width', `${labelWidth}px`);
     }
 
     chips.forEach((chip) => {
@@ -1271,40 +1477,81 @@
 
     const wasShown = statsSection.classList.contains('show-stats');
     statsSection.classList.add('show-stats');
-    statsSection.style.setProperty('--card-extra-x-left', '0px');
-    statsSection.style.setProperty('--card-extra-x-right', '0px');
     cards.forEach((card) => {
       card.style.transition = 'none';
     });
-    // eslint-disable-next-line no-unused-expressions
-    statsSection.offsetHeight; // force layout so the reset above is measured, not last frame's transform
 
     const portraitRect = portrait.getBoundingClientRect();
     const isLeftCard = (card) => card.classList.contains('stat-card--1') || card.classList.contains('stat-card--2');
     const BUFFER = 6;
+    // Closest a card's outer edge may come to the screen edge.
+    const EDGE_MARGIN = 10;
+    const viewportWidth = document.documentElement.clientWidth;
 
-    let maxLeft = 0;
-    let maxRight = 0;
-    cards.forEach((card) => {
-      // The whole label, every line — measuring only the first text
-      // node missed the second line of two-line labels ("6+" was
-      // measured, "Internships" under the <br> wasn't), so a long
-      // second line could tuck under the photo.
-      const range = document.createRange();
-      range.selectNodeContents(card);
-      const textRect = range.getBoundingClientRect();
-      if (isLeftCard(card)) {
-        const overlap = textRect.right - portraitRect.left;
-        if (overlap > maxLeft) maxLeft = overlap;
-      } else {
-        const overlap = portraitRect.right - textRect.left;
-        if (overlap > maxRight) maxRight = overlap;
-      }
-    });
-    const extraLeft = maxLeft > 0 ? Math.ceil(maxLeft + BUFFER) : 0;
-    const extraRight = maxRight > 0 ? Math.ceil(maxRight + BUFFER) : 0;
-    statsSection.style.setProperty('--card-extra-x-left', `${extraLeft}px`);
-    statsSection.style.setProperty('--card-extra-x-right', `${extraRight}px`);
+    // Clearing the photo can push the cards off the screen instead when
+    // there isn't room beside it (phones, portrait tablets). Each pass
+    // pushes the labels clear at the current --stat-fit, then shrinks
+    // --stat-fit by however far the cards overshoot the screen edge.
+    // The push has a fixed BUFFER part that doesn't scale, so this
+    // takes two or three passes to settle; at 1 (desktop) it stops
+    // after the first.
+    let fit = 1;
+    for (let pass = 0; pass < 4; pass += 1) {
+      statsSection.style.setProperty('--stat-fit', String(fit));
+      statsSection.style.setProperty('--card-extra-x-left', '0px');
+      statsSection.style.setProperty('--card-extra-x-right', '0px');
+      // eslint-disable-next-line no-unused-expressions
+      statsSection.offsetHeight; // force layout so the reset above is measured, not last frame's transform
+
+      let maxLeft = 0;
+      let maxRight = 0;
+      cards.forEach((card) => {
+        // The whole label, every line — measuring only the first text
+        // node missed the second line of two-line labels ("6+" was
+        // measured, "Internships" under the <br> wasn't), so a long
+        // second line could tuck under the photo.
+        const range = document.createRange();
+        range.selectNodeContents(card);
+        const textRect = range.getBoundingClientRect();
+        if (isLeftCard(card)) {
+          const overlap = textRect.right - portraitRect.left;
+          if (overlap > maxLeft) maxLeft = overlap;
+        } else {
+          const overlap = portraitRect.right - textRect.left;
+          if (overlap > maxRight) maxRight = overlap;
+        }
+      });
+      const extraLeft = maxLeft > 0 ? Math.ceil(maxLeft + BUFFER) : 0;
+      const extraRight = maxRight > 0 ? Math.ceil(maxRight + BUFFER) : 0;
+      statsSection.style.setProperty('--card-extra-x-left', `${extraLeft}px`);
+      statsSection.style.setProperty('--card-extra-x-right', `${extraRight}px`);
+      // eslint-disable-next-line no-unused-expressions
+      statsSection.offsetHeight;
+
+      let outerLeft = Infinity;
+      let outerRight = -Infinity;
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        if (isLeftCard(card)) outerLeft = Math.min(outerLeft, rect.left);
+        else outerRight = Math.max(outerRight, rect.right);
+      });
+      if (outerLeft >= EDGE_MARGIN - 0.5 && outerRight <= viewportWidth - EDGE_MARGIN + 0.5) break;
+
+      // Footprint from the photo's edge out to the card's outer edge,
+      // against the room actually there. Both sides take the same
+      // factor so the four cards stay one symmetric set.
+      const footLeft = portraitRect.left - outerLeft;
+      const footRight = outerRight - portraitRect.right;
+      const roomLeft = portraitRect.left - EDGE_MARGIN;
+      const roomRight = viewportWidth - EDGE_MARGIN - portraitRect.right;
+      const shrink = Math.min(
+        footLeft > 0 ? roomLeft / footLeft : 1,
+        footRight > 0 ? roomRight / footRight : 1,
+      );
+      // Floor so labels never get unreadably small; past it the cards
+      // may still touch the edge, which beats illegible text.
+      fit = Math.max(0.6, Math.min(1, fit * shrink));
+    }
 
     // Undo the temporary forced reveal before re-enabling transitions,
     // so a card that wasn't actually on screen yet doesn't visibly
@@ -1352,6 +1599,9 @@
       };
       card.addEventListener('mouseenter', expand);
       card.addEventListener('focus', expand);
+      // Tablets: there's no hover, and iOS Safari doesn't focus a
+      // button on tap, so a tap needs its own way in.
+      card.addEventListener('click', expand);
     });
   }
 
@@ -2308,6 +2558,11 @@
       // it's fragile: the crossover depends on viewport height and on
       // how tall the WHY copy reflows at a given width.
       const startWarmup = () => {
+        // Not on Data Saver or a 2G-class connection: the reel is 21MB,
+        // and on those it's better fetched only if the play button is
+        // actually pressed.
+        const connection = navigator.connection;
+        if (connection && (connection.saveData || /(^|-)2g$/.test(connection.effectiveType || ''))) return;
         const warmup = new IntersectionObserver(
           ([entry]) => {
             if (!entry.isIntersecting) return;
@@ -2973,6 +3228,7 @@
     initHeaderTheme();
     initNavToggle();
     initLenis();
+    initIntro();
     initEntrance();
     initSpiralField();
     initMagneticNav();

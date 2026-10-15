@@ -429,6 +429,12 @@ body:has(.case2) .footer {
 @media (max-width: 640px) {
   .nav-toggle {
     display: flex;
+    /* Last in the row. .primary-nav stays a (now empty) flex item once
+       its list goes absolute below, and with justify-content:
+       space-between it held the right end, leaving the hamburger
+       floating between it and the logo. Visual order only: tab order
+       is still logo, then menu button. */
+    order: 1;
   }
   /* The list becomes a dropdown card instead of sharing the header
      pill. It's anchored to .site-header__inner (already
@@ -483,6 +489,54 @@ body:has(.case2) .footer {
   .primary-nav__categories .nav-link:focus-visible {
     background: var(--color-blush);
   }
+}
+
+/* The same hamburger + dropdown as the phone rules above, applied at
+   any width where the four links would wrap onto a second line inside
+   the pill (browser zoom or a larger default font does that at tablet
+   and laptop widths, per direct report). initNavToggle in script.js
+   measures the wrap and sets .site-header--compact; the media query
+   above stays as the no-JS baseline for phones. Comments on the phone
+   block explain each rule. */
+.site-header--compact .nav-toggle {
+  display: flex;
+  order: 1;
+}
+.site-header--compact .primary-nav {
+  position: static;
+}
+.site-header--compact .primary-nav__categories {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  left: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  background: rgba(250, 245, 236, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 45px rgba(33, 26, 20, 0.16);
+  padding: 0.5rem;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.site-header--compact .nav-toggle[aria-expanded="true"] ~ .primary-nav .primary-nav__categories {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.site-header--compact .primary-nav__categories .nav-link {
+  display: flex;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  justify-content: center;
+}
+.site-header--compact .primary-nav__categories .nav-link:hover,
+.site-header--compact .primary-nav__categories .nav-link:focus-visible {
+  background: var(--color-blush);
 }
 
 /* reference just does hover:text-brandPink transition-colors — a
@@ -1516,7 +1570,13 @@ body:has(.case2) .footer {
     gap: clamp(0.5rem, 3vw, 1rem);
   }
   .project-category__label {
-    font-size: clamp(1.1rem, 5.5vw, 1.6rem);
+    /* was clamp(1.1rem, 5.5vw, 1.6rem). Gasoek One runs much wider than
+       the Poppins this was tuned for: "Campaigns" needed 131px at a
+       375px phone, and two label boxes that wide plus the chip and gaps
+       came to ~360px in 335px of room, so flex squeezed the boxes and
+       clipped the last letter. This keeps the row inside the screen
+       from 320px up to the 640px breakpoint. */
+    font-size: clamp(0.9rem, 5.6vw - 3.2px, 1.6rem);
   }
   .project-category__chip {
     width: clamp(64px, 20vw, 100px);
@@ -1649,6 +1709,15 @@ body:has(.case2) .footer {
      its own independent clamp(). */
   --portrait-width: clamp(190px, 46vw, 320px);
 }
+/* Phones: a slightly smaller photo leaves the stat cards enough room
+   on each side to stay readable. At the 190px floor a 375px phone has
+   only ~93px beside the photo, so --stat-fit alone would have shrunk
+   the card labels to ~11px; at ~160px they stay ~14-16px. */
+@media (max-width: 480px) {
+  .stats-cluster {
+    --portrait-width: clamp(130px, 42.5vw, 320px);
+  }
+}
 
 /* Fixed-position illustration field (script.js's initAboutDoodles) —
    NOT scoped to #about's own box, so these can visibly drift across
@@ -1704,7 +1773,13 @@ body:has(.case2) .footer {
 .about-doodle--3 { width: 140px; top: 20%; left: 6vw; }
 .about-doodle--6 { width: clamp(140px, 14vw, 210px); top: 36%; right: 2vw; }
 
-@media (min-width: 720px) {
+/* Wide landscape screens only. The doodles are placed by viewport
+   height and sit in the side margins, which only exist when the screen
+   is both landscape and wide. On a portrait tablet (iPad 768x1024 up
+   to 1024x1366) the heading and stat cards span nearly the full width,
+   so the key and shell landed on top of "Hi, I'm" and the card labels;
+   a 1024x768 landscape iPad had the key and shell over the cards. */
+@media (min-width: 1100px) and (orientation: landscape) {
   .about-doodle { display: block; }
 }
 
@@ -1872,11 +1947,18 @@ body:has(.case2) .footer {
    The old version added a different one-off pixel nudge to each card
    (-10px/+8px/+6px/+8px/+12px/...) on top of the shared offset, which
    is exactly what made each card sit a random-looking distance from
-   the portrait instead of reading as one aligned, symmetric set. */
-#stats-section.show-stats .stat-card--1 { opacity: 1; transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% - var(--stat-offset-y))) rotate(11deg) scale(0.85); }
-#stats-section.show-stats .stat-card--2 { opacity: 1; transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% + var(--stat-offset-y))) rotate(-11deg) scale(0.85); }
-#stats-section.show-stats .stat-card--3 { opacity: 1; transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% - var(--stat-offset-y))) rotate(-11deg) scale(0.85); }
-#stats-section.show-stats .stat-card--4 { opacity: 1; transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% + var(--stat-offset-y))) rotate(11deg) scale(0.85); }
+   the portrait instead of reading as one aligned, symmetric set.
+
+   --stat-fit: a shared shrink factor, also set by positionStatCards.
+   Pushing the labels clear of the photo can push the cards off the
+   screen edge instead when there isn't room beside the photo (phones,
+   portrait tablets: on a 375px phone each side has ~93px against the
+   ~113px a card needs). It stays 1 wherever the cards already fit, and
+   otherwise shrinks all four by just enough to land inside the screen. */
+#stats-section.show-stats .stat-card--1 { opacity: 1; transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% - var(--stat-offset-y))) rotate(11deg) scale(calc(0.85 * var(--stat-fit, 1))); }
+#stats-section.show-stats .stat-card--2 { opacity: 1; transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% + var(--stat-offset-y))) rotate(-11deg) scale(calc(0.85 * var(--stat-fit, 1))); }
+#stats-section.show-stats .stat-card--3 { opacity: 1; transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% - var(--stat-offset-y))) rotate(-11deg) scale(calc(0.85 * var(--stat-fit, 1))); }
+#stats-section.show-stats .stat-card--4 { opacity: 1; transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% + var(--stat-offset-y))) rotate(11deg) scale(calc(0.85 * var(--stat-fit, 1))); }
 @media (min-width: 720px) {
   /* the old fixed-px offsets (+-195/200px) only cleared the portrait
      at the viewport width they were measured against — .portrait-
@@ -1897,10 +1979,10 @@ body:has(.case2) .footer {
     --stat-offset-x: calc(var(--portrait-width) / 2 + clamp(10px, 6vw - 40px, 55px));
     --stat-offset-y: clamp(33px, 3.5vw, 58px);
   }
-  #stats-section.show-stats .stat-card--1 { transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% - var(--stat-offset-y))) rotate(11deg) scale(1); }
-  #stats-section.show-stats .stat-card--2 { transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% + var(--stat-offset-y))) rotate(-11deg) scale(1); }
-  #stats-section.show-stats .stat-card--3 { transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% - var(--stat-offset-y))) rotate(-11deg) scale(1); }
-  #stats-section.show-stats .stat-card--4 { transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% + var(--stat-offset-y))) rotate(11deg) scale(1); }
+  #stats-section.show-stats .stat-card--1 { transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% - var(--stat-offset-y))) rotate(11deg) scale(var(--stat-fit, 1)); }
+  #stats-section.show-stats .stat-card--2 { transform: translate(calc(-50% - var(--stat-offset-x) - var(--card-extra-x-left, 0px)), calc(-50% + var(--stat-offset-y))) rotate(-11deg) scale(var(--stat-fit, 1)); }
+  #stats-section.show-stats .stat-card--3 { transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% - var(--stat-offset-y))) rotate(-11deg) scale(var(--stat-fit, 1)); }
+  #stats-section.show-stats .stat-card--4 { transform: translate(calc(-50% + var(--stat-offset-x) + var(--card-extra-x-right, 0px)), calc(-50% + var(--stat-offset-y))) rotate(11deg) scale(var(--stat-fit, 1)); }
 }
 
 /* ---------------------------------------------------------------
@@ -4537,4 +4619,163 @@ body.resume-open {
 .flipbook--spread.is-cover .flipbook__page,
 .flipbook--spread.is-back .flipbook__left {
   border-radius: 10px;
+}
+
+/* ---------------------------------------------------------------
+   Phones and tablets
+   ---------------------------------------------------------------
+   Touch-only fixes. Everything keeps its designed size on screen;
+   these only enlarge what a finger can hit, or stop iOS misbehaving.
+--------------------------------------------------------------- */
+
+/* iOS Safari zooms the whole page in when a focused field's text is
+   under 16px, and leaves it zoomed after. The form's 0.95rem (15.2px)
+   set that off on every iPhone. */
+@media (pointer: coarse), (max-width: 720px) {
+  .contact-form__input {
+    font-size: 16px;
+  }
+}
+
+@media (pointer: coarse) {
+  /* Invisible hit areas: a transparent ::after larger than the button,
+     so the drawn control stays its size while the tap target grows to
+     ~40-44px. Horizontal reach is held to half the gap between
+     neighbours so two hit areas never overlap. */
+  .tv-frame__play,
+  .tv-frame__sound,
+  .case2-video-tool {
+    position: relative;
+  }
+  .tv-frame__play::after,
+  .tv-frame__sound::after {
+    content: "";
+    position: absolute;
+    inset: -7px -4px;
+  }
+  .case2-video-tool::after {
+    content: "";
+    position: absolute;
+    inset: -8px -3px;
+  }
+  /* 11.5px on a phone was the smallest text on the site */
+  .case2-video-tool {
+    font-size: 0.8rem;
+  }
+
+  /* Footer links were 22px tall and ~32px apart. Padding instead of a
+     bigger gap, so the whole row height is tappable, not just the
+     letters. */
+  .footer__col {
+    gap: 0;
+  }
+  .footer__col a {
+    padding-block: 0.6rem;
+  }
+
+  /* Back link on the case-study pages: 25px tall. The negative top
+     margin and trimmed bottom margin keep it where it was. */
+  .case2-back {
+    padding-block: 10px;
+    margin-top: -10px;
+    margin-bottom: calc(clamp(1.5rem, 4vw, 2.5rem) - 10px);
+  }
+}
+
+/* The inline nav (iPads; phones and the compact header get the
+   dropdown menu, whose links are already 51px tall) had 24px-tall
+   links. 641px is where the phone menu hands over to the inline list. */
+@media (pointer: coarse) and (min-width: 641px) {
+  .site-header:not(.site-header--compact) .nav-link {
+    padding-block: 10px;
+    margin-block: -10px;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Intro (homepage, every load)
+   ---------------------------------------------------------------
+   Black screen, the shell draws itself line by line and inks in,
+   then initIntro (script.js) flies it into the navbar logo while the
+   black lifts off the hero, and the wordmark wipes in beside it.
+   Shown only when the inline script in index.html's <head> sets
+   html.intro-pending. The drawing is pure CSS so it starts on first
+   paint instead of waiting for the GSAP scripts from the CDN.
+--------------------------------------------------------------- */
+.intro {
+  display: none;
+}
+html.intro-pending .intro {
+  display: block;
+  position: fixed;
+  inset: 0;
+  /* above the header and everything else; .cursor-glow (9999) stays
+     on top so the custom cursor still shows */
+  z-index: 9990;
+  touch-action: none;
+  /* Failsafe: if script.js never takes over (CDN down, a script
+     error), the screen gets out of the way on its own. initIntro
+     adds .is-running, which cancels this. */
+  animation: intro-failsafe 0.6s ease 9s forwards;
+}
+html.intro-pending .intro.is-running {
+  animation: none;
+}
+@keyframes intro-failsafe {
+  to { opacity: 0; visibility: hidden; }
+}
+.intro__bg {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+.intro__shell {
+  --intro-shell-w: min(58vw, 340px);
+  position: absolute;
+  left: calc(50% - var(--intro-shell-w) / 2);
+  top: calc(50% - var(--intro-shell-w) * 0.8494 / 2); /* 0.8494 = the viewBox's height/width */
+  width: var(--intro-shell-w);
+  height: calc(var(--intro-shell-w) * 0.8494);
+  overflow: visible; /* half the stroke sits outside the viewBox */
+  /* the flight's x/y/scale (script.js) are worked out from the
+     top-left corner */
+  transform-origin: 0 0;
+}
+/* pathLength="1" on each outline (index.html) makes a dash of 1 the
+   whole outline, so offset 1 -> 0 traces it from nothing to complete.
+   --i staggers them so the outer body starts first and the chambers
+   and star follow. The gap is 2, not 1: with "1 1" the next dash began
+   exactly at the outline's end, and that zero-length dash rendered as
+   a faint speck on every outline before its turn to draw. */
+.intro__shell-lines path {
+  fill: none;
+  stroke: var(--color-pink);
+  stroke-width: 5;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  animation:
+    intro-draw 1.3s cubic-bezier(0.65, 0, 0.35, 1) calc(0.25s + var(--i) * 0.045s) forwards,
+    intro-fade-out 0.4s ease 2.05s forwards;
+}
+.intro__shell-fill {
+  fill: var(--color-pink);
+  opacity: 0;
+  animation: intro-fade-in 0.45s ease 1.95s forwards;
+}
+@keyframes intro-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes intro-fade-in {
+  to { opacity: 1; }
+}
+@keyframes intro-fade-out {
+  to { opacity: 0; }
+}
+/* Scroll lock while the intro runs. Set by initIntro rather than by
+   .intro-pending, so if the scripts never arrive the page can still
+   scroll once the failsafe above hides the screen. */
+html.intro-lock,
+html.intro-lock body {
+  overflow: hidden;
 }
