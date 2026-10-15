@@ -2475,6 +2475,43 @@
       video.muted = !(soundOn && inView && userInteracted);
     };
 
+    // Standby screen (.tv-frame__standby in index.html): a fallback
+    // only, per direct request. The set looks as it always did until
+    // play is pressed; only if the reel isn't ready by then (or stalls
+    // mid-play) does the retro static + "Tuning in" fill the screen
+    // until it is. States: idle (never played; standby hidden),
+    // loading, error (a play attempt failed), playing / paused (a real
+    // frame on screen; standby hidden).
+    const setScreen = (state) => {
+      if (frame) frame.dataset.tvState = state;
+    };
+    let playRequested = false;
+    video.addEventListener('play', () => {
+      // Already buffered (the warm-up usually sees to that): no static
+      // at all, straight to the picture when 'playing' fires.
+      if (video.readyState < 3) setScreen('loading');
+    });
+    video.addEventListener('waiting', () => {
+      if (!video.paused) setScreen('loading');
+    });
+    video.addEventListener('playing', () => setScreen('playing'));
+    // A failed background warm-up stays invisible, same as before; it
+    // only shows once someone has actually tried to play.
+    const failedState = () => (playRequested ? 'error' : 'idle');
+    video.addEventListener('pause', () => {
+      // Chrome fires 'pause' straight after a failed play's 'error';
+      // without this check that pause wiped "No signal" back to idle.
+      if (video.error) setScreen(failedState());
+      else setScreen(video.currentTime > 0 && video.readyState >= 2 ? 'paused' : 'idle');
+    });
+    video.addEventListener('error', () => setScreen(failedState()));
+    // load() (the retry after an error) throws the current frame away;
+    // without this a 'paused' state would keep the standby hidden over
+    // a black screen.
+    video.addEventListener('emptied', () => {
+      if (video.paused) setScreen('idle');
+    });
+
     playBtn.addEventListener('click', () => {
       if (video.paused) {
         userInteracted = true;
@@ -2482,11 +2519,27 @@
         autoPaused = false;
         applyMuted();
         updateSoundButton();
-        video.play().catch(() => {});
+        playRequested = true;
+        // After a failed load, start the fetch over rather than asking
+        // a dead element to play.
+        if (video.error) video.load();
+        video.play().catch(() => {
+          if (video.paused) setScreen(video.error ? 'error' : 'idle');
+        });
       } else {
         video.pause();
       }
     });
+
+    // The standby is only tappable while it's showing, and the only
+    // time a tap means anything then is "No signal": it retries, same
+    // as the play button. (While "Tuning in" the video isn't paused.)
+    const standby = frame ? frame.querySelector('.tv-frame__standby') : null;
+    if (standby) {
+      standby.addEventListener('click', () => {
+        if (video.paused) playBtn.click();
+      });
+    }
 
     soundBtn.addEventListener('click', () => {
       soundOn = !soundOn;
