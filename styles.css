@@ -4871,14 +4871,17 @@ html.intro-pending .intro.is-running {
   stroke-linejoin: round;
   stroke-dasharray: 1 2;
   stroke-dashoffset: 1;
+  /* Sped up per direct request (was 1.3s each from 0.25s, 0.045s
+     apart, so the black held for ~2.4s): the last outline now finishes
+     at ~1.6s and the shell is inked in by 1.8s. */
   animation:
-    intro-draw 1.3s cubic-bezier(0.65, 0, 0.35, 1) calc(0.25s + var(--i) * 0.045s) forwards,
-    intro-fade-out 0.4s ease 2.05s forwards;
+    intro-draw 1s cubic-bezier(0.65, 0, 0.35, 1) calc(0.15s + var(--i) * 0.035s) forwards,
+    intro-fade-out 0.35s ease 1.55s forwards;
 }
 .intro__shell-fill {
   fill: var(--color-pink);
   opacity: 0;
-  animation: intro-fade-in 0.45s ease 1.95s forwards;
+  animation: intro-fade-in 0.35s ease 1.45s forwards;
 }
 @keyframes intro-draw {
   to { stroke-dashoffset: 0; }

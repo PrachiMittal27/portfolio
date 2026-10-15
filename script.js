@@ -381,9 +381,18 @@
 
     root.classList.add('intro-lock');
     if (lenisInstance) lenisInstance.stop();
-    // Hidden until the shell lands on it; then revealed shell-first.
-    const shellOnly = `inset(0% ${(100 - LOGO_SHELL.right * 100).toFixed(2)}% 0% 0%)`;
-    if (logo) logo.style.clipPath = 'inset(0% 100% 0% 0%)';
+    // The logo is hidden until the shell arrives. Its clip runs off two
+    // custom properties so the two halves can move independently:
+    // --wm-r is the wordmark's wipe, and --wm-l holds the logo's own
+    // shell back until the flying one has actually landed on it (show
+    // it any earlier and there are two shells on screen).
+    const shellEdge = `${(LOGO_SHELL.right * 100).toFixed(2)}%`;
+    const wordmarkHidden = `${(100 - LOGO_SHELL.right * 100).toFixed(2)}%`;
+    if (logo) {
+      logo.style.setProperty('--wm-l', '0%');
+      logo.style.setProperty('--wm-r', '100%');
+      logo.style.clipPath = 'inset(0% var(--wm-r) 0% var(--wm-l))';
+    }
 
     let finished = false;
     const finish = () => {
@@ -392,7 +401,11 @@
       revealIntro();
       intro.remove();
       root.classList.remove('intro-pending', 'intro-lock');
-      if (logo) logo.style.clipPath = '';
+      if (logo) {
+        logo.style.clipPath = '';
+        logo.style.removeProperty('--wm-l');
+        logo.style.removeProperty('--wm-r');
+      }
       if (lenisInstance) lenisInstance.start();
       ScrollTrigger.refresh();
     };
@@ -407,15 +420,19 @@
         Promise.all(anims.map((anim) => anim.finished)).then(resolve, resolve);
       } else {
         if (fill) fill.addEventListener('animationend', resolve, { once: true });
-        setTimeout(resolve, 3200);
+        setTimeout(resolve, 2400);
       }
     });
-    // A real loading screen: hold for the page too, but not forever.
+    // Holds for the page to finish loading, but only briefly: it used to
+    // wait up to 6s, which kept the black up well past the drawing on a
+    // slow connection, per direct request to cut the black time. What
+    // the hand-off needs (fonts, for the logo's measured position) is
+    // waited on separately below; stray images can land after.
     const loaded = new Promise((resolve) => {
       if (document.readyState === 'complete') resolve();
       else {
         window.addEventListener('load', resolve, { once: true });
-        setTimeout(resolve, 6000);
+        setTimeout(resolve, Math.max(0, 2200 - performance.now()));
       }
     });
     const fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
@@ -431,8 +448,16 @@
       const x = logoRect.left + logoRect.width * LOGO_SHELL.left - from.left;
       const y = logoRect.top + logoRect.height * LOGO_SHELL.top - from.top;
 
+      // power3, not expo: expo's long tail had the shell visibly parked
+      // on the logo for ~0.3s before the timeline counted it as landed,
+      // so the wordmark seemed late. The wipe also starts a beat before
+      // touchdown, per direct request that it come as soon as the shell
+      // reaches the navbar.
+      const FLIGHT = 1;
+      const WIPE_START = FLIGHT - 0.12;
+
       gsap.timeline({
-        delay: 0.25,
+        delay: 0.1,
         onComplete: () => {
           clearTimeout(safety);
           finish();
@@ -443,23 +468,30 @@
           revealIntro();
         }, null, 0)
         // The black dissolves in place (per direct request, instead of
-        // sliding up with the shell), a little longer than the flight
-        // so the hero is still settling in as the shell lands.
-        .to(bg, { opacity: 0, duration: 1.4, ease: 'power2.inOut' }, 0)
-        .to(shell, { x, y, scale, duration: 1.15, ease: 'expo.inOut' }, 0)
-        // Swap the flying shell for the logo's own (same spot, same
-        // pink), then wipe the wordmark in from behind it. A plain .to()
-        // that picks up the clip this .call sets: a fromTo() here
-        // applies its "from" clip the moment the timeline is built, so
-        // the logo's small shell was already showing in the navbar
-        // through the whole flight, per direct report of a small frame
-        // flashing while the shell animated.
+        // sliding up with the shell), over the same second as the flight.
+        .to(bg, { opacity: 0, duration: 1, ease: 'power1.inOut' }, 0)
+        .to(shell, { x, y, scale, duration: FLIGHT, ease: 'power3.inOut' }, 0)
+        // Wordmark: open the clip at the shell's right edge only, then
+        // wipe right. Deliberately set in a .call and tweened with
+        // immediateRender off - a plain fromTo() applies its "from" the
+        // moment the timeline is built, which once had the logo's small
+        // shell showing in the navbar through the whole flight, per
+        // direct report of a small frame flashing while the shell moved.
         .call(() => {
-          logo.style.clipPath = shellOnly;
+          logo.style.setProperty('--wm-l', shellEdge);
+          logo.style.setProperty('--wm-r', wordmarkHidden);
+        }, null, WIPE_START)
+        // Fast start, long settle: slow overall, per the earlier request,
+        // but moving the instant it begins (was power2.inOut, 1.4s).
+        .fromTo(logo, { '--wm-r': wordmarkHidden }, {
+          '--wm-r': '0%', duration: 1.3, ease: 'power2.out', immediateRender: false,
+        }, WIPE_START)
+        // Touchdown: swap the flying shell for the logo's own (same spot,
+        // same pink).
+        .call(() => {
+          logo.style.setProperty('--wm-l', '0%');
           shell.style.visibility = 'hidden';
-        }, null, 1.15)
-        // Slowed per direct request (was 0.8s).
-        .to(logo, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.4, ease: 'power2.inOut' }, 1.15);
+        }, null, FLIGHT);
     }).catch(finish);
   }
 
