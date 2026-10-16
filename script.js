@@ -351,9 +351,9 @@
 
   /* ---------------- Homepage intro ----------------
      Black screen; the shell draws itself line by line and inks in
-     (pure CSS, see .intro in styles.css, so it starts on first paint).
-     Once that's done and the page has loaded, this flies the shell
-     into the navbar logo while the black slides up off the hero like a
+     (pure CSS, inline in index.html's <head>, so it starts on first
+     paint). Once that's done and the page has loaded, this flies the
+     shell into the navbar logo while the black slides up off the hero like a
      curtain, then wipes the wordmark in from behind the shell. Plays
      only when the inline script in index.html's <head> set
      html.intro-pending; everywhere else this just resolves
@@ -377,9 +377,11 @@
     const fill = intro.querySelector('.intro__shell-fill');
     const bg = intro.querySelector('.intro__bg');
     const logo = document.querySelector('.logo__mark');
-    intro.classList.add('is-running'); // cancels the CSS failsafe
+    // Tells the failsafe in index.html's <head> that the intro has been
+    // taken over. Scrolling is already locked by .intro-pending itself
+    // (styles.css), from the first frame.
+    intro.classList.add('is-running');
 
-    root.classList.add('intro-lock');
     if (lenisInstance) lenisInstance.stop();
     // The logo is hidden until the shell arrives. Its clip runs off two
     // custom properties so the two halves can move independently:
@@ -400,7 +402,7 @@
       finished = true;
       revealIntro();
       intro.remove();
-      root.classList.remove('intro-pending', 'intro-lock');
+      root.classList.remove('intro-pending', 'intro-revealed');
       if (logo) {
         logo.style.clipPath = '';
         logo.style.removeProperty('--wm-l');
@@ -465,6 +467,11 @@
       })
         .call(() => {
           intro.style.pointerEvents = 'none';
+          // The page itself has been black since the first frame (the
+          // inline <style> in index.html's <head>); give it its cream
+          // back now, so the hero shows through normally as the
+          // overlay dissolves.
+          root.classList.add('intro-revealed');
           revealIntro();
         }, null, 0)
         // The black dissolves in place (per direct request, instead of
@@ -3309,34 +3316,52 @@
     }
   }
 
+  // While the homepage intro plays, index.html loads styles.css in the
+  // background (so the black screen can paint without waiting for it),
+  // which means layout may not be final at DOMContentLoaded. Everything
+  // below measures that layout, so it waits for the stylesheet: its
+  // <head> script sets window.pmStylesPending and fires pm-styles-ready.
+  // Every other page and visit loads it the normal blocking way, and
+  // this resolves at once.
+  const stylesReady = new Promise((resolve) => {
+    if (!window.pmStylesPending) {
+      resolve();
+      return;
+    }
+    document.addEventListener('pm-styles-ready', resolve, { once: true });
+    setTimeout(resolve, 8000); // never hold the site hostage to one file
+  });
+
   document.addEventListener('DOMContentLoaded', () => {
-    initHeaderTheme();
-    initNavToggle();
-    initLenis();
-    initIntro();
-    initEntrance();
-    initSpiralField();
-    initMagneticNav();
-    initScrollReveals();
-    initCurveFloat();
-    initSectionColorTransitions();
-    initProjectsMarquee();
-    initTvShowcase();
-    initProjectChips();
-    initFooterMarquee();
-    initAboutStats();
-    initTestimonials();
-    initContactForm();
-    initResumeModal();
-    initPhilosophyScroll();
-    initFlyingCard();
-    initAboutDoodles();
-    initCaseStudyReveals();
-    initCaseNav();
-    initCaseCycles();
-    initCaseVideos();
-    initSpreadBook();
-    initCustomCursor();
-    initResizeRefresh();
+    stylesReady.then(() => {
+      initHeaderTheme();
+      initNavToggle();
+      initLenis();
+      initIntro();
+      initEntrance();
+      initSpiralField();
+      initMagneticNav();
+      initScrollReveals();
+      initCurveFloat();
+      initSectionColorTransitions();
+      initProjectsMarquee();
+      initTvShowcase();
+      initProjectChips();
+      initFooterMarquee();
+      initAboutStats();
+      initTestimonials();
+      initContactForm();
+      initResumeModal();
+      initPhilosophyScroll();
+      initFlyingCard();
+      initAboutDoodles();
+      initCaseStudyReveals();
+      initCaseNav();
+      initCaseCycles();
+      initCaseVideos();
+      initSpreadBook();
+      initCustomCursor();
+      initResizeRefresh();
+    });
   });
 })();

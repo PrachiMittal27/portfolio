@@ -3,6 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!--
+  Intro, part 1 of 2 (the rest is initIntro in script.js). Everything
+  the black screen and the shell drawing need lives here in <head>,
+  not in styles.css, because it has to paint before any stylesheet has
+  arrived. A browser draws nothing until every render-blocking
+  stylesheet has loaded, and on a first visit that wait (styles.css
+  plus Google Fonts' CSS from another server) showed as a blank white
+  tab ahead of the black, per direct report with a screen recording.
+  So while the intro plays, the script below loads both stylesheets in
+  the background instead, under cover of the black.
+
+  Black on the page and body too, not just the overlay: the browser can
+  draw a frame after reading <body> but before reaching .intro, and the
+  cream behind it flashed beige. initIntro adds .intro-revealed as the
+  black starts to dissolve, which hands the cream back.
+-->
+<style>
+  .intro {
+    display: none;
+  }
+  html.intro-pending .intro {
+    display: block;
+    position: fixed;
+    inset: 0;
+    /* above the header and everything else; .cursor-glow (9999) stays
+       on top so the custom cursor still shows */
+    z-index: 9990;
+    touch-action: none;
+  }
+  /* Scroll lock from the very first frame: a scrollable page under the
+     black flashed Chrome's scrollbar as it loaded, and the shell jumped
+     sideways when a later lock removed it. */
+  html.intro-pending,
+  html.intro-pending body {
+    overflow: hidden;
+  }
+  html.intro-pending:not(.intro-revealed),
+  html.intro-pending:not(.intro-revealed) body {
+    background: #000;
+  }
+  .intro__bg {
+    position: absolute;
+    inset: 0;
+    background: #000;
+  }
+  .intro__shell {
+    --intro-shell-w: min(58vw, 340px);
+    position: absolute;
+    left: calc(50% - var(--intro-shell-w) / 2);
+    top: calc(50% - var(--intro-shell-w) * 0.8494 / 2); /* 0.8494 = the viewBox's height/width */
+    width: var(--intro-shell-w);
+    height: calc(var(--intro-shell-w) * 0.8494);
+    overflow: visible; /* half the stroke sits outside the viewBox */
+    /* the flight's x/y/scale (script.js) are worked out from the
+       top-left corner */
+    transform-origin: 0 0;
+  }
+  /* pathLength="1" on each outline makes a dash of 1 the whole outline,
+     so offset 1 -> 0 traces it from nothing to complete; --i staggers
+     them, outer body first. The gap is 2, not 1: with "1 1" the next
+     dash began exactly at the outline's end and showed as a speck.
+     Colours are literal (the brand pink), not var(--color-pink): the
+     custom properties live in styles.css, which isn't here yet. */
+  .intro__shell-lines path {
+    fill: none;
+    stroke: #DC346E;
+    stroke-width: 5;
+    stroke-linejoin: round;
+    stroke-dasharray: 1 2;
+    stroke-dashoffset: 1;
+    animation:
+      intro-draw 1s cubic-bezier(0.65, 0, 0.35, 1) calc(0.15s + var(--i) * 0.035s) forwards,
+      intro-fade-out 0.35s ease 1.55s forwards;
+  }
+  .intro__shell-fill {
+    fill: #DC346E;
+    opacity: 0;
+    animation: intro-fade-in 0.35s ease 1.45s forwards;
+  }
+  @keyframes intro-draw {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes intro-fade-in {
+    to { opacity: 1; }
+  }
+  @keyframes intro-fade-out {
+    to { opacity: 0; }
+  }
+</style>
+<script>
+  /* Decides before first paint whether the intro plays: on every
+     homepage load, per direct request, except with reduced motion or on
+     a case study's link to a section of this page (#about, #projects,
+     #connect), where the visitor asked to land somewhere specific. Its
+     "Home" link (#top) still gets the intro. Then loads the stylesheets
+     to suit. */
+  (function () {
+    var root = document.documentElement;
+    var sheets = [
+      'https://fonts.googleapis.com/css2?family=Gasoek+One&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,500&display=swap',
+      'styles.css?v=308'
+    ];
+
+    var playIntro = false;
+    try {
+      var fromThisSite = document.referrer && new URL(document.referrer).origin === location.origin;
+      var toSection = fromThisSite && location.hash && location.hash !== '#top';
+      playIntro = !toSection && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (e) { /* no intro */ }
+
+    if (!playIntro) {
+      // No black screen to hide behind: load them the ordinary,
+      // render-blocking way, so the page never shows unstyled.
+      for (var i = 0; i < sheets.length; i++) {
+        document.write('<link rel="stylesheet" href="' + sheets[i] + '">');
+      }
+      return;
+    }
+
+    root.classList.add('intro-pending');
+
+    // Under the intro: fetch as a preload (full priority, never render-
+    // blocking), then switch it on as a stylesheet. script.js waits for
+    // pm-styles-ready before setting anything up, since every bit of it
+    // measures the styled layout.
+    window.pmStylesPending = true;
+    sheets.forEach(function (href, index) {
+      var isMain = index === sheets.length - 1;
+      var link = document.createElement('link');
+      var done = function () {
+        if (!isMain || !window.pmStylesPending) return;
+        window.pmStylesPending = false;
+        document.dispatchEvent(new Event('pm-styles-ready'));
+      };
+      link.rel = 'preload';
+      link.as = 'style';
+      link.href = href;
+      link.onload = function () {
+        // the second load event is the stylesheet itself being applied
+        link.onload = done;
+        link.rel = 'stylesheet';
+      };
+      // a failed sheet must not leave the page waiting on it forever
+      link.onerror = function () {
+        link.rel = 'stylesheet';
+        done();
+      };
+      document.head.appendChild(link);
+    });
+
+    // Failsafe: .intro-pending also locks scrolling, so if script.js
+    // never takes over (CDN down, a script error) drop it after 9s and
+    // hand the page back. initIntro marks .intro .is-running when it has
+    // the intro in hand (and has its own safety net from there).
+    setTimeout(function () {
+      var intro = document.querySelector('.intro');
+      if (!intro || !intro.classList.contains('is-running')) {
+        root.classList.remove('intro-pending');
+      }
+    }, 9000);
+  })();
+</script>
+<!-- without JavaScript the script above can't load them -->
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Gasoek+One&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=308">
+</noscript>
 <title>Prachi Mittal, Communication Designer</title>
 <meta name="description" content="Prachi Mittal, a communication designer driven by curiosity.">
 <!--
@@ -44,26 +213,7 @@
 <meta property="og:image" content="https://prachimittal27.github.io/portfolio/assets/og-home.jpg">
 <meta property="og:image:alt" content="The Prachi Mittal logo: a line-drawn nautilus shell beside the words &ldquo;Prachi Mittal, driven by curiosity.&rdquo;">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gasoek+One&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=305">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<script>
-  /* Decides before first paint whether the intro plays (.intro in
-     styles.css, initIntro in script.js): on every homepage load, per
-     direct request. Two exceptions: reduced motion, and a case study's
-     link to a section of this page (#about, #projects, #connect), where
-     the visitor asked to land somewhere specific. Its "Home" link
-     (#top) still gets the intro. */
-  try {
-    var fromThisSite = document.referrer && new URL(document.referrer).origin === location.origin;
-    var toSection = fromThisSite && location.hash && location.hash !== '#top';
-    if (!toSection && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.documentElement.classList.add('intro-pending');
-    }
-  } catch (e) { /* no intro */ }
-</script>
 </head>
 <body>
 
@@ -71,9 +221,9 @@
      then flies into the navbar logo while the black lifts off the hero.
      Hidden unless the inline script in <head> set html.intro-pending
      (every homepage load, except reduced motion or a jump to a section
-     from a case study). The drawing is
-     pure CSS so it starts on first paint, before the scripts arrive; see
-     .intro in styles.css and initIntro in script.js. Shell paths are
+     from a case study). The drawing is pure CSS, inline in <head>, so
+     it starts on first paint, before any stylesheet or script arrives;
+     see there and initIntro in script.js. Shell paths are
      assets/favicon.svg, cropped by the viewBox to the shell itself. -->
 <div class="intro" aria-hidden="true">
   <div class="intro__bg"></div>
@@ -1016,6 +1166,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
-<script src="script.js?v=305"></script>
+<script src="script.js?v=308"></script>
 </body>
 </html>
